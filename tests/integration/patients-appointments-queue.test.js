@@ -69,6 +69,16 @@ describe('Doctors & appointments (DOC/APT)', () => {
     expect(bad.status).toBe(400);
   });
 
+  tc({ id: 'IT-DOC-03', level: I, fr: ['FR-14'], title: 'Departments are listed with their doctors', input: 'GET /departments; GET /doctors?departmentId={Cardiology}', expected: '8+ departments with doctor counts; only Cardiology doctors returned' }, async (note) => {
+    const deps = (await api('reception').get('/departments')).body;
+    const cardio = deps.find((d) => d.name === 'Cardiology');
+    const docs = (await api('reception').get(`/doctors?departmentId=${cardio.id}`)).body;
+    note(`${deps.length} departments (Cardiology has ${cardio.doctor_count} doctor(s)); filter → ${docs.map((d) => `${d.full_name} (${d.department})`).join(', ')}`);
+    expect(deps.length).toBeGreaterThanOrEqual(8);
+    expect(docs.length).toBe(cardio.doctor_count);
+    expect(docs.every((d) => d.department === 'Cardiology')).toBe(true);
+  });
+
   tc({ id: 'IT-APT-01', level: I, fr: ['FR-16'], title: 'A valid appointment is booked in the SCHEDULED state', input: 'Dr. Sharma, 2026-10-22 11:00', expected: '201, status SCHEDULED, end time 11:15' }, async (note) => {
     const res = await api('reception').post('/appointments', { patient_id: patientId, doctor_id: ctx.ids.sharma, date: TOMORROW, start_time: '11:00', reason: 'Headache' });
     apptId = res.body.id;

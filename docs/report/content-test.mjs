@@ -227,7 +227,7 @@ export function testResults() {
       ['NFR-04', 'Dispensing with one unavailable item leaves stock and prescription unchanged (IT-PHA-03); admission + bed update in one transaction', nfr('IT-PHA-03')?.status || '—'],
       ['NFR-05', nfr('AT-04')?.actual || 'see AT-04', nfr('AT-04')?.status || '—'],
       ['NFR-06', coverage ? `Layered code; domain rules ${coverage.domain.lines}% line coverage (target ≥ 80%)` : 'see 10.2', coverage && coverage.domain.lines >= 80 ? 'PASS' : '—'],
-      ['NFR-07', 'Runs on Linux (test environment) and macOS (development); Node.js 20+; Chromium automated', 'PASS (partial – see scope)'],
+      ['NFR-07', 'Built and fully tested on Linux with Node.js 22 and Chromium; all dependencies are cross-platform (Node.js 20+, prebuilt SQLite binaries for Windows/macOS/Linux). Windows/macOS and Firefox/Safari runs are not yet verified', 'PASS (partial – see scope)'],
       ['NFR-08', nfr('IT-AUD-01')?.actual || 'see IT-AUD-01', nfr('IT-AUD-01')?.status || '—'],
     ], { boldFirst: true, statusCol: 2, size: 17 }),
     TableCaption('Non-functional requirement results'),
@@ -279,7 +279,9 @@ export function traceability() {
   const rows = [...spec.functional, ...spec.nonFunctional.map((n) => ({ ...n, module: null }))].map((r) => {
     const ts = tests.filter((t) => (t.fr || []).includes(r.id));
     const ok = ts.length && ts.every((t) => t.status === 'PASS');
-    return [r.id, r.module ? `${r.module} – ${svc[r.module]}` : r.category, r.module ? pages[r.module] : '—', ts.map((t) => t.id).join(', ') || (r.id === 'NFR-09' || r.id === 'NFR-10' ? 'Not tested (design target)' : '—'), ts.length ? (ok ? 'PASS' : 'FAIL') : 'NOT TESTED'];
+    if (!ts.length && r.id === 'NFR-06') return [r.id, r.category, '—', coverage ? `Verified by measurement: layered structure + domain-rule line coverage ${coverage.domain.lines}% (Part D, 10.2)` : 'Coverage not measured', coverage && coverage.domain.lines >= 80 ? 'PASS' : 'NOT TESTED'];
+    if (!ts.length && r.id === 'NFR-07') return [r.id, r.category, '—', 'Tested on Linux + Chromium only; other operating systems and browsers not yet verified (Part C, 2.2)', 'PASS (PARTIAL)'];
+    return [r.id, r.module ? `${r.module} – ${svc[r.module]}` : r.category, r.module ? pages[r.module] : '—', ts.map((t) => t.id).join(', ') || (r.id === 'NFR-09' || r.id === 'NFR-10' ? 'Not tested – production design target (Part C, 2.2)' : '—'), ts.length ? (ok ? 'PASS' : 'FAIL') : 'NOT TESTED'];
   });
   return [
     H1('APPENDIX A – REQUIREMENTS TRACEABILITY MATRIX', { pageBreak: true }),
