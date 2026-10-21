@@ -91,7 +91,7 @@ function RequestDischargeModal({ adm, onClose, onDone }) {
         <Field label="Discharge summary" required hint="Condition at discharge, treatment given, medication and follow-up advice.">
           <Textarea rows={6} autoFocus value={summary} onChange={(e) => setSummary(e.target.value)} placeholder="Patient stable, afebrile for 48 hours. Continue oral antibiotics for 5 days. Review in OPD after 1 week." data-testid="discharge-summary" />
         </Field>
-        <Alert tone="info">The admission moves to <b>Discharge pending</b>. Bed-day charges ({money0(adm.daily_rate)}/day, minimum 1 day) are calculated now; billing must clear the account before reception completes the discharge.</Alert>
+        <Alert tone="info">The admission moves to <b>Discharge pending</b>. Bed-day charges ({money0(adm.daily_rate)}/day; the whole admission counts at least 1 day, shared across any transfers) are calculated now; billing must clear the account before reception completes the discharge.</Alert>
       </div>
     </Modal>
   );
@@ -294,7 +294,7 @@ export default function AdmissionDetail() {
 
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
-          <CardHeader icon={BedDouble} title="Bed stays" subtitle="Charged per stay at the ward's daily rate (minimum 1 day)" />
+          <CardHeader icon={BedDouble} title="Bed stays" subtitle="The admission is billed max(1, ⌈total hours ÷ 24⌉) bed-days, shared across stays by time spent, at each ward's daily rate" />
           <Table rows={a.stays} empty={<EmptyState icon={BedDouble} title="No bed stays" />} columns={[
             { header: 'Bed', render: (s) => (<div><p className="font-medium text-slate-800">{s.bed_no}</p><p className="text-xs text-slate-500">{s.ward}</p></div>) },
             { header: 'From', render: (s) => fmtDateTime(s.start_at) },

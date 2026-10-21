@@ -1,7 +1,7 @@
 import { db, tx } from '../db/connection.js';
 import { clock, nowIso } from '../utils/clock.js';
 import { badRequest, conflict, notFound } from '../utils/errors.js';
-import { validate, z, nonEmpty, timeStr, dateStr } from '../utils/validate.js';
+import { validate, z, nonEmpty, timeStr, dateStr, likeTerm } from '../utils/validate.js';
 import { freeSlots, isWorkingDay, ACTIVE_STATUSES } from '../domain/appointmentRules.js';
 import { timeToMinutes } from '../domain/time.js';
 import { AuthService } from './authService.js';
@@ -47,7 +47,7 @@ export const DoctorService = {
     const where = [];
     const params = [];
     if (departmentId) { where.push('d.department_id = ?'); params.push(Number(departmentId)); }
-    if (q) { where.push('(u.full_name LIKE ? OR d.specialization LIKE ?)'); params.push(`%${q}%`, `%${q}%`); }
+    if (q) { where.push("(u.full_name LIKE ? ESCAPE '\\' OR d.specialization LIKE ? ESCAPE '\\')"); params.push(likeTerm(q), likeTerm(q)); }
     return db().prepare(`${BASE} ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY dep.name, u.full_name`).all(...params);
   },
 

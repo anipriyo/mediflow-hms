@@ -19,13 +19,20 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const [form, setForm] = useState({ username: '', password: '' });
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(() => {
+    try {
+      if (sessionStorage.getItem('mediflow.sessionEnded')) { sessionStorage.removeItem('mediflow.sessionEnded'); return 'Your session has ended. Please sign in again.'; }
+    } catch { /* storage unavailable */ }
+    return null;
+  });
   const [busy, setBusy] = useState(false);
 
   if (user) return <Navigate to={location.state?.from || '/'} replace />;
 
   const submit = async (e) => {
     e.preventDefault();
+    if (busy) return;
+    if (!form.username.trim() || !form.password) { setError('Enter your username and password.'); return; }
     setBusy(true);
     setError(null);
     try {
@@ -91,7 +98,7 @@ export default function Login() {
                 <Input name="password" type="password" autoComplete="current-password" className="pl-9" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••••" required />
               </div>
             </Field>
-            <Button type="submit" className="w-full" size="lg" loading={busy} disabled={!form.username || !form.password}>Sign in</Button>
+            <Button type="submit" className="w-full" size="lg" loading={busy}>Sign in</Button>
           </form>
 
           <div className="mt-8 rounded-xl border border-dashed border-slate-300 bg-white p-4">

@@ -1,7 +1,7 @@
 import { db, tx } from '../db/connection.js';
 import { nowIso, todayStr } from '../utils/clock.js';
 import { badRequest, conflict, notFound } from '../utils/errors.js';
-import { validate, z, nonEmpty, dateStr } from '../utils/validate.js';
+import { validate, z, nonEmpty, dateStr, likeTerm } from '../utils/validate.js';
 import { isLowStock, expiryStatus, daysToExpiry, checkDispensable, stockAlerts } from '../domain/inventoryRules.js';
 import { ChargeService } from './chargeService.js';
 import { AuditService } from './auditService.js';
@@ -26,7 +26,7 @@ const medSchema = z.object({
 export const PharmacyService = {
   medicines({ q, filter } = {}) {
     const rows = q
-      ? db().prepare('SELECT * FROM medicines WHERE name LIKE ? OR generic_name LIKE ? ORDER BY name').all(`%${q}%`, `%${q}%`)
+      ? db().prepare("SELECT * FROM medicines WHERE name LIKE ? ESCAPE '\\' OR generic_name LIKE ? ESCAPE '\\' ORDER BY name").all(likeTerm(q), likeTerm(q))
       : db().prepare('SELECT * FROM medicines ORDER BY name').all();
     let list = rows.map(decorate);
     if (filter === 'low') list = list.filter((m) => m.low_stock);

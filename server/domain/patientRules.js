@@ -1,3 +1,5 @@
+import { isRealDate } from './time.js';
+
 // Patient registration rules (FR-07 … FR-09, BR-01)
 export const GENDERS = ['MALE', 'FEMALE', 'OTHER'];
 export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
@@ -6,6 +8,18 @@ export function formatPatientCode(n) {
   return `P${String(n).padStart(5, '0')}`;
 }
 
+/** Accept common ways of typing an Indian mobile number: spaces, dashes, brackets, +91 / 91 / 0 prefixes. */
+export function normalizePhone(phone) {
+  let p = String(phone ?? '').replace(/[\s\-().]/g, '');
+  if (/^\+91\d{10}$/.test(p)) p = p.slice(3);
+  else if (/^91\d{10}$/.test(p)) p = p.slice(2);
+  else if (/^0\d{10}$/.test(p)) p = p.slice(1);
+  return p;
+}
+
+export const MAX_LENGTHS = { first_name: 60, last_name: 60, email: 120, address: 300, allergies: 300, emergency_contact_name: 80 };
+const TEXT_FIELDS = ['first_name', 'last_name', 'gender', 'dob', 'phone', 'email', 'address', 'blood_group', 'allergies', 'emergency_contact_name', 'emergency_contact_phone'];
+
 export function isValidMobile(phone) {
   return /^[6-9]\d{9}$/.test(String(phone || ''));
 }
@@ -13,6 +27,11 @@ export function isValidMobile(phone) {
 /** Returns a map of field → message; empty object when valid. */
 export function validatePatient(data, todayStr, { partial = false } = {}) {
   const errors = {};
+  for (const k of TEXT_FIELDS) {
+    if (data[k] !== undefined && data[k] !== null && typeof data[k] !== 'string') errors[k] = 'Must be text';
+    else if (typeof data[k] === 'string' && MAX_LENGTHS[k] && data[k].length > MAX_LENGTHS[k]) errors[k] = `Must be at most ${MAX_LENGTHS[k]} characters`;
+  }
+  if (Object.keys(errors).length) return errors;
   const has = (k) => data[k] !== undefined;
   const req = (k) => !partial || has(k);
 
@@ -21,7 +40,8 @@ export function validatePatient(data, todayStr, { partial = false } = {}) {
   if (req('phone') && !isValidMobile(data.phone)) errors.phone = 'Enter a valid 10-digit mobile number';
   if (req('gender') && !GENDERS.includes(data.gender)) errors.gender = 'Gender must be MALE, FEMALE or OTHER';
   if (req('dob')) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(data.dob || '') || Number.isNaN(Date.parse(data.dob))) errors.dob = 'Date of birth is required (YYYY-MM-DD)';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data.dob || '')) errors.dob = 'Date of birth is required (YYYY-MM-DD)';
+    else if (!isRealDate(data.dob)) errors.dob = 'Date of birth is not a valid calendar date';
     else if (data.dob > todayStr) errors.dob = 'Date of birth cannot be in the future';
     else if (data.dob < '1900-01-01') errors.dob = 'Date of birth is not realistic';
   }

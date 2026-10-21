@@ -1,7 +1,8 @@
 import { db, tx } from '../db/connection.js';
+import { nextSequence } from '../db/sequence.js';
 import { nowIso, compactDate } from '../utils/clock.js';
 import { badRequest, conflict, notFound } from '../utils/errors.js';
-import { validate, z, nonEmpty } from '../utils/validate.js';
+import { validate, z, nonEmpty, likeTerm, clampInt, optionalDate } from '../utils/validate.js';
 import { round2 } from '../domain/money.js';
 import {
   computeTotals, validateDiscount, validatePayment, statusAfterPayment, canCancelInvoice, outstanding, formatInvoiceNo, formatReceiptNo, PAYMENT_METHODS,
@@ -46,11 +47,12 @@ export const BillingService = {
       if (!lines.length) throw badRequest('There are no unbilled charges for this patient');
       const totals = computeTotals(lines, 0);
       const day = compactDate();
-      const seq = db().prepare('SELECT COUNT(*) c FROM invoices WHERE invoice_no LIKE ?').get(`INV-${day}-%`).c + 1;
+      const seq = nextSequence('invoices', 'invoice_no', `INV-${day}-`);
       const info = db()
         .prepare(`INSERT INTO invoices (invoice_no, patient_id, admission_id, subtotal, discount_pct, discount_amount, total, paid_amount, status, notes, created_by, created_at)
-                  VALUES (?, ?, ?, ?, 0, 0, ?, 0, 'UNPAID', ?, ?, ?)`)
-        .run(formatInvoiceNo(day, seq), patient.id, data.admission_id || null, totals.subtotal, totals.total, data.notes || null, actor.id, nowIso());
+                  VALUES (?, ?, ?, ?, 0, 0, ?, 0, ?, ?, ?, ?)`)
+        // a zero-value invoice (e.g. free camp consultation) has nothing to collect, so it is settled immediately
+        .run(formatInvoiceNo(day, seq), patient.id, data.admission_id || null, totals.subtotal, totals.total, totals.total === 0 ? 'PAID' : 'UNPAID', data.notes || null, actor.id, nowIso());
       const upd = db().prepare('UPDATE charges SET invoice_id = ? WHERE id = ? AND invoice_id IS NULL');
       for (const l of lines) {
         if (upd.run(info.lastInsertRowid, l.id).changes !== 1) throw conflict('Charges changed while generating the invoice; please retry');
@@ -67,10 +69,12 @@ export const BillingService = {
     const params = [];
     if (status) { const s = String(status).split(','); where.push(`i.status IN (${s.map(() => '?').join(',')})`); params.push(...s); }
     if (patientId) { where.push('i.patient_id = ?'); params.push(Number(patientId)); }
-    if (q) { where.push("(i.invoice_no LIKE ? OR p.patient_code = ? OR p.first_name || ' ' || p.last_name LIKE ?)"); params.push(`%${q}%`, q, `%${q}%`); }
+    if (q) { where.push("(i.invoice_no LIKE ? ESCAPE '\\' OR p.patient_code = ? OR p.first_name || ' ' || p.last_name LIKE ? ESCAPE '\\')"); params.push(likeTerm(q), q, likeTerm(q)); }
+    from = optionalDate(from, 'from');
+    to = optionalDate(to, 'to');
     if (from) { where.push('i.created_at >= ?'); params.push(new Date(`${from}T00:00:00`).toISOString()); }
     if (to) { where.push('i.created_at <= ?'); params.push(new Date(`${to}T23:59:59.999`).toISOString()); }
-    return db().prepare(`${BASE} ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY i.created_at DESC, i.id DESC LIMIT ?`).all(...params, Number(limit) || 300);
+    return db().prepare(`${BASE} ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY i.created_at DESC, i.id DESC LIMIT ?`).all(...params, clampInt(limit, 300, 1, 1000));
   },
 
   get(id) {
@@ -110,7 +114,7 @@ export const BillingService = {
       if (problem) throw badRequest(problem, { amount: problem });
       if (data.method !== 'CASH' && !data.reference) throw badRequest(`A transaction reference is required for ${data.method} payments`, { reference: 'Required' });
       const day = compactDate();
-      const seq = db().prepare('SELECT COUNT(*) c FROM payments WHERE receipt_no LIKE ?').get(`R-${day}-%`).c + 1;
+      const seq = nextSequence('payments', 'receipt_no', `R-${day}-`);
       const receiptNo = formatReceiptNo(day, seq);
       const pay = db()
         .prepare('INSERT INTO payments (invoice_id, receipt_no, amount, method, reference, received_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')

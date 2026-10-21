@@ -90,6 +90,7 @@ const groupDetails = [
     ['0.2', '18-Oct-2026', 'Scope, user roles and feature set agreed (core, hospital operations, distinctive features)'],
     ['0.5', '21-Oct-2026', 'Requirements baselined (50 FR, 10 NFR, 12 BR); architecture and UML diagrams'],
     ['0.9', '21-Oct-2026', 'Prototype implemented; unit, integration, system and acceptance tests executed'],
+    ['0.95', '22-Oct-2026', 'Robustness / edge-case testing; additional defects fixed and regression-tested'],
     ['1.0', '22-Oct-2026', 'Final report for submission'],
   ]),
   TableCaption('Revision history'),

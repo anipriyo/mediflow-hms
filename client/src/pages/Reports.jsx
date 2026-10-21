@@ -87,8 +87,8 @@ export default function Reports() {
           ))}
         </div>
         <div className="ml-auto flex flex-wrap items-end gap-3">
-          <Field label="From"><Input type="date" value={range.from} max={range.to} onChange={(e) => e.target.value && setRange({ ...range, from: e.target.value, preset: null })} /></Field>
-          <Field label="To"><Input type="date" value={range.to} min={range.from} onChange={(e) => e.target.value && setRange({ ...range, to: e.target.value, preset: null })} /></Field>
+          <Field label="From"><Input type="date" value={range.from} max={range.to} onChange={(e) => { const v = e.target.value; if (v) setRange((r) => ({ from: v, to: v > r.to ? v : r.to, preset: null })); }} /></Field>
+          <Field label="To"><Input type="date" value={range.to} min={range.from} onChange={(e) => { const v = e.target.value; if (v) setRange((r) => ({ from: v < r.from ? v : r.from, to: v, preset: null })); }} /></Field>
         </div>
       </Card>
 

@@ -1,5 +1,6 @@
 import { db } from '../db/connection.js';
 import { nowIso } from '../utils/clock.js';
+import { likeTerm, clampInt, optionalDate } from '../utils/validate.js';
 
 const SENSITIVE = /(password|token|secret)/i;
 
@@ -27,16 +28,18 @@ export const AuditService = {
     const where = [];
     const params = [];
     if (q) {
-      where.push('(summary LIKE ? OR username LIKE ? OR entity_id = ?)');
-      params.push(`%${q}%`, `%${q}%`, q);
+      where.push("(summary LIKE ? ESCAPE '\\' OR username LIKE ? ESCAPE '\\' OR entity_id = ?)");
+      params.push(likeTerm(q), likeTerm(q), String(q));
     }
     if (entity) { where.push('entity = ?'); params.push(entity); }
     if (action) { where.push('action = ?'); params.push(action); }
     if (userId) { where.push('user_id = ?'); params.push(Number(userId)); }
+    from = optionalDate(from, 'from');
+    to = optionalDate(to, 'to');
     if (from) { where.push('ts >= ?'); params.push(new Date(`${from}T00:00:00`).toISOString()); }
     if (to) { where.push('ts <= ?'); params.push(new Date(`${to}T23:59:59.999`).toISOString()); }
     const sql = `SELECT * FROM audit_logs ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY id DESC LIMIT ? OFFSET ?`;
-    const rows = db().prepare(sql).all(...params, Math.min(Number(limit) || 200, 1000), Number(offset) || 0);
+    const rows = db().prepare(sql).all(...params, clampInt(limit, 200, 1, 1000), clampInt(offset, 0, 0, Number.MAX_SAFE_INTEGER));
     const total = db().prepare(`SELECT COUNT(*) c FROM audit_logs ${where.length ? `WHERE ${where.join(' AND ')}` : ''}`).get(...params).c;
     return { rows, total };
   },

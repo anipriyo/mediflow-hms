@@ -1,9 +1,10 @@
 import { db, tx } from '../db/connection.js';
 import { todayStr, nowIso } from '../utils/clock.js';
 import { badRequest, conflict, notFound } from '../utils/errors.js';
-import { validatePatient, findPossibleDuplicates, formatPatientCode, ageFrom } from '../domain/patientRules.js';
+import { validatePatient, findPossibleDuplicates, formatPatientCode, ageFrom, normalizePhone } from '../domain/patientRules.js';
 import { can } from '../domain/permissions.js';
 import { AuditService } from './auditService.js';
+import { likeTerm, clampInt } from '../utils/validate.js';
 
 const FIELDS = ['first_name', 'last_name', 'gender', 'dob', 'phone', 'email', 'address', 'blood_group', 'allergies', 'emergency_contact_name', 'emergency_contact_phone'];
 
@@ -12,7 +13,9 @@ function clean(input) {
   for (const f of FIELDS) {
     if (input[f] !== undefined) out[f] = typeof input[f] === 'string' ? input[f].trim() : input[f];
   }
-  if (out.gender) out.gender = String(out.gender).toUpperCase();
+  if (typeof out.gender === 'string') out.gender = out.gender.toUpperCase();
+  if (typeof out.phone === 'string') out.phone = normalizePhone(out.phone);
+  if (typeof out.emergency_contact_phone === 'string') out.emergency_contact_phone = normalizePhone(out.emergency_contact_phone);
   for (const k of ['email', 'address', 'blood_group', 'allergies', 'emergency_contact_name', 'emergency_contact_phone']) {
     if (out[k] === '') out[k] = null;
   }
@@ -59,18 +62,18 @@ export const PatientService = {
 
   /** FR-10 */
   search({ q, limit = 50, offset = 0 } = {}) {
-    const lim = Math.min(Number(limit) || 50, 500);
+    const lim = clampInt(limit, 50, 1, 500);
     if (!q || !String(q).trim()) {
-      const rows = db().prepare('SELECT * FROM patients ORDER BY id DESC LIMIT ? OFFSET ?').all(lim, Number(offset) || 0);
+      const rows = db().prepare('SELECT * FROM patients ORDER BY id DESC LIMIT ? OFFSET ?').all(lim, clampInt(offset, 0, 0, Number.MAX_SAFE_INTEGER));
       const total = db().prepare('SELECT COUNT(*) c FROM patients').get().c;
       return { rows: rows.map(withAge), total };
     }
     const term = String(q).trim();
-    const like = `%${term}%`;
+    const like = likeTerm(term);
     const rows = db()
       .prepare(
         `SELECT * FROM patients
-         WHERE patient_code = ? COLLATE NOCASE OR phone LIKE ? OR (first_name || ' ' || last_name) LIKE ? OR last_name LIKE ?
+         WHERE patient_code = ? COLLATE NOCASE OR phone LIKE ? ESCAPE '\\' OR (first_name || ' ' || last_name) LIKE ? ESCAPE '\\' OR last_name LIKE ? ESCAPE '\\'
          ORDER BY CASE WHEN patient_code = ? COLLATE NOCASE THEN 0 ELSE 1 END, first_name, last_name LIMIT ?`,
       )
       .all(term, like, like, like, term, lim);

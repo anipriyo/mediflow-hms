@@ -32,7 +32,7 @@ export function createApp({ serveClient = false } = {}) {
       return res.status(err.status).json({ error: err.message, code: err.code, details: err.details });
     }
     if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'Malformed JSON body', code: 'BAD_JSON' });
-    if (err.code === 'SQLITE_CONSTRAINT_UNIQUE' || err.code === 'SQLITE_CONSTRAINT_CHECK' || err.code === 'SQLITE_CONSTRAINT_FOREIGNKEY') {
+    if (typeof err.code === 'string' && err.code.startsWith('SQLITE_CONSTRAINT')) {
       return res.status(409).json({ error: 'The operation violates a data integrity rule', code: err.code });
     }
     console.error(err);

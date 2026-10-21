@@ -20,3 +20,12 @@ export function addMinutes(hhmm, mins) {
 export function intervalsOverlap(aStart, aEnd, bStart, bEnd) {
   return timeToMinutes(aStart) < timeToMinutes(bEnd) && timeToMinutes(bStart) < timeToMinutes(aEnd);
 }
+
+/** True when `s` is a real calendar date in YYYY-MM-DD form (rejects 2026-02-30, 2026-13-01 …). */
+export function isRealDate(s) {
+  if (typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const [y, m, d] = s.split('-').map(Number);
+  if (y < 1000) return false;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+}

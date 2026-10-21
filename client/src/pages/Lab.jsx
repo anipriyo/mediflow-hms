@@ -90,7 +90,7 @@ function ResultModal({ order, onClose, onSaved }) {
         </div>
         {err && <Alert tone="error">{err}</Alert>}
         {numeric ? (
-          <Field label={`Result value${order.unit ? ` (${order.unit})` : ''}`} required>
+          <Field label={<>Result value{order.unit ? <span className="normal-case tracking-normal"> ({order.unit})</span> : null}</>} required>
             <div className="flex items-center gap-3">
               <Input type="number" step="any" autoFocus value={value} onChange={(e) => setValue(e.target.value)} className="max-w-[200px]" data-testid="result-value" />
               {flag === 'NORMAL' && <Badge color="green"><CheckCircle2 className="h-3 w-3" />Within range</Badge>}

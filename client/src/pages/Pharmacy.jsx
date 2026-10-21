@@ -116,7 +116,8 @@ function AddMedicineModal({ open, onClose, onSaved }) {
   const save = async () => {
     const e = {};
     if (!f.name.trim()) e.name = 'Name is required';
-    if (f.unit_price === '' || Number(f.unit_price) < 0) e.unit_price = 'Enter a valid price';
+    if (f.unit_price === '' || !Number.isFinite(Number(f.unit_price)) || Number(f.unit_price) < 0 || Number(f.unit_price) > 1000000) e.unit_price = 'Enter a valid price';
+    if (f.reorder_level !== '' && (!Number.isInteger(Number(f.reorder_level)) || Number(f.reorder_level) < 0)) e.reorder_level = 'Whole number ≥ 0';
     if (f.stock_qty !== '' && (!Number.isInteger(Number(f.stock_qty)) || Number(f.stock_qty) < 0)) e.stock_qty = 'Whole number ≥ 0';
     if (f.expiry_date && f.expiry_date <= todayStr()) e.expiry_date = 'Must be a future date';
     setErrors(e);
@@ -153,7 +154,7 @@ function AddMedicineModal({ open, onClose, onSaved }) {
         <Field label="Strength"><Input value={f.strength} onChange={set('strength')} placeholder="e.g. 500 mg" /></Field>
         <Field label="Unit price (₹)" required error={errors.unit_price}><Input type="number" min="0" step="0.01" value={f.unit_price} onChange={set('unit_price')} error={errors.unit_price} /></Field>
         <Field label="Opening stock" error={errors.stock_qty}><Input type="number" min="0" value={f.stock_qty} onChange={set('stock_qty')} error={errors.stock_qty} /></Field>
-        <Field label="Reorder level" hint="Alert when stock falls to this level"><Input type="number" min="0" value={f.reorder_level} onChange={set('reorder_level')} /></Field>
+        <Field label="Reorder level" hint="Alert when stock falls to this level" error={errors.reorder_level}><Input type="number" min="0" value={f.reorder_level} onChange={set('reorder_level')} error={errors.reorder_level} /></Field>
         <Field label="Batch no."><Input value={f.batch_no} onChange={set('batch_no')} /></Field>
         <Field label="Expiry date" error={errors.expiry_date}><Input type="date" min={addDays(todayStr(), 1)} value={f.expiry_date} onChange={set('expiry_date')} error={errors.expiry_date} /></Field>
       </div>

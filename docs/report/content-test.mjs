@@ -8,8 +8,8 @@ const lastRun = () => tests.reduce((m, t) => (t.ts > m ? t.ts : m), '');
 
 const LEVEL_INFO = {
   Unit: { prefix: 'UT', tool: 'Vitest 3', what: 'Pure domain-rule functions in server/domain (slots, conflicts, queue ETA, state machines, billing, inventory, patient validation, lock-out, permissions)' },
-  Integration: { prefix: 'IT', tool: 'Vitest + Supertest', what: 'REST API → middleware → services → SQLite (in-memory schema, frozen clock) for every module and for NFR security/performance checks' },
-  System: { prefix: 'ST', tool: 'Playwright (Chromium)', what: 'Complete application in a real browser: built SPA + API + fresh demo database, one test per module workflow' },
+  Integration: { prefix: 'IT', tool: 'Vitest + Supertest', what: 'REST API → middleware → services → SQLite (in-memory schema, frozen clock) for every module, NFR security/performance checks and robustness probes with invalid, boundary and malicious input (IT-EDGE-*)' },
+  System: { prefix: 'ST', tool: 'Playwright (Chromium)', what: 'Complete application in a real browser: built SPA + API + fresh demo database, one test per module workflow, plus a crawl of every screen for all six roles at desktop and phone width (ST-UI-*)' },
   Acceptance: { prefix: 'AT', tool: 'Playwright (Chromium)', what: 'End-to-end business scenarios across several roles, validating the user requirements (UR-01 … UR-14)' },
 };
 
@@ -127,6 +127,7 @@ export function testPlan() {
       ['Consultation, laboratory, pharmacy', '/consultations/*, /lab/*, /pharmacy/* incl. charge creation and atomic dispensing', String(tests.filter((t) => /^IT-(CON|LAB|PHA)/.test(t.id)).length)],
       ['Admissions, beds, billing', '/beds/*, /admissions/*, /billing/* incl. clearance and receipts', String(tests.filter((t) => /^IT-(IPD|BIL)/.test(t.id)).length)],
       ['Reports, audit, NFRs', '/reports/*, /audit, SQL injection, password storage, headers, latency', String(tests.filter((t) => /^IT-(RPT|AUD|NFR)/.test(t.id)).length)],
+      ['Robustness / edge cases', 'Impossible dates, malformed filters, wildcards, paging limits, over-long or wrong-type input, ownership and duplicate checks, sequence-number uniqueness, time-zone day boundaries', String(tests.filter((t) => t.id.startsWith('IT-EDGE')).length)],
     ], { boldFirst: true }),
     TableCaption('Integration test areas'),
 
@@ -264,7 +265,7 @@ export function testResults() {
     H3('12.2 Defect summary and analysis'),
     DataTable([{ header: 'Severity', width: 2000 }, { header: 'Reported', width: 2000 }, { header: 'Fixed', width: 2000 }, { header: 'Deferred / open', width: PORTRAIT_W - 6000 }], ['High', 'Medium', 'Low'].map((sv) => [sv, String(sevCount(sv)), String(defects.filter((d) => d.severity === sv && d.status === 'Fixed').length), String(defects.filter((d) => d.severity === sv && d.status !== 'Fixed').length)]), { boldFirst: true }),
     TableCaption('Defects by severity and status'),
-    P('**Analysis.** The only high-severity defect (DEF-05) was a billing-calculation error that appeared only in a multi-step scenario (admit → transfer within hours → discharge); it was found by scenario-based system testing, which confirms the value of testing complete workflows in addition to unit tests. Three defects were presentation issues found during UI walkthroughs. No defect caused data loss, and no security defect was found. The deferred item (DEF-08) is a usability enhancement whose underlying rule is already enforced by the server.'),
+    P(`**Analysis.** Most defects (${defects.filter((d) => /Robustness|robustness/.test(d.foundIn)).length} of ${defects.length}) were found by the dedicated robustness / edge-case pass, which probed every API with impossible dates, wrong data types, extreme values and malicious strings and crawled every screen for all six roles at desktop and phone width. The two high-severity defects were both data-integrity problems that only appear in longer scenarios: DEF-05 (bed-day billing after a same-day transfer) and DEF-22 (sequence numbers colliding with existing numbers) – confirming the value of scenario-based and data-driven testing in addition to unit tests. No defect caused data loss and no security vulnerability was found; the one deferred item (DEF-08) is a usability enhancement whose rule is already enforced by the server.`),
 
     H2('13. Conclusion'),
     P(`MediFlow implements all ${spec.functional.length} functional requirements of the SRS. The final regression run passed ${tot.pass} of ${tot.total} automated test cases across unit, integration, system and acceptance levels, every exit criterion of the test plan is met, and all defects of medium or higher severity are fixed and covered by regression tests. The system is therefore considered **ready for demonstration and user acceptance by hospital staff**. Recommended next steps before a production pilot are: cross-browser and accessibility testing, load testing on the target server, nightly database backups, HTTPS deployment behind a reverse proxy and a supervised user-acceptance session.`),

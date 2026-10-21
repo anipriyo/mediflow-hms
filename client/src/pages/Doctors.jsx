@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Building2, Plus, Pencil, Search, Stethoscope, Clock3, DoorOpen, IndianRupee, GraduationCap } from 'lucide-react';
 import { api } from '../lib/api.js';
 import { useApi } from '../lib/useApi.js';
@@ -141,7 +141,9 @@ function DepartmentModal({ open, onClose, onSaved }) {
   const [form, setForm] = useState({ name: '', description: '' });
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  useEffect(() => { if (open) { setForm({ name: '', description: '' }); setError(null); } }, [open]);
   const save = async () => {
+    if (!form.name.trim()) { setError('Department name is required'); return; }
     setBusy(true); setError(null);
     try {
       const d = await api.post('/departments', form);

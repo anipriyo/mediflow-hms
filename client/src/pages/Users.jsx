@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { UserPlus, KeyRound, Power, PowerOff, Search, ShieldCheck, Check, Minus, Eye } from 'lucide-react';
 import { api } from '../lib/api.js';
@@ -39,10 +39,13 @@ function statusOf(u) {
 
 function CreateUserModal({ open, onClose, onSaved }) {
   const toast = useToast();
-  const [form, setForm] = useState({ username: '', full_name: '', role: 'RECEPTIONIST', password: '', email: '', phone: '' });
+  const EMPTY = { username: '', full_name: '', role: 'RECEPTIONIST', password: '', email: '', phone: '' };
+  const [form, setForm] = useState(EMPTY);
   const [errors, setErrors] = useState({});
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  // reset every time the dialog opens so a previous user's data (and password) is never shown again
+  useEffect(() => { if (open) { setForm(EMPTY); setErrors({}); setError(null); } }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   const save = async () => {

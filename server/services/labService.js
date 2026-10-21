@@ -1,7 +1,7 @@
 import { db, tx } from '../db/connection.js';
-import { nowIso } from '../utils/clock.js';
+import { nowIso, combineLocal, addDays } from '../utils/clock.js';
 import { badRequest, conflict, forbidden, notFound } from '../utils/errors.js';
-import { validate, z } from '../utils/validate.js';
+import { validate, z, clampInt, optionalDate } from '../utils/validate.js';
 import { canTransitionLab, isAbnormal } from '../domain/labRules.js';
 import { ChargeService } from './chargeService.js';
 import { AuditService } from './auditService.js';
@@ -29,10 +29,15 @@ export const LabService = {
     if (status) { const s = String(status).split(','); where.push(`lo.status IN (${s.map(() => '?').join(',')})`); params.push(...s); }
     if (patientId) { where.push('lo.patient_id = ?'); params.push(Number(patientId)); }
     if (doctorId) { where.push('lo.doctor_id = ?'); params.push(Number(doctorId)); }
-    if (date) { where.push('substr(lo.created_at, 1, 10) = ?'); params.push(date); }
+    date = optionalDate(date, 'date');
+    if (date) {
+      // compare in local time: the order timestamps are stored in UTC
+      where.push('lo.created_at >= ? AND lo.created_at < ?');
+      params.push(combineLocal(date).toISOString(), combineLocal(addDays(date, 1)).toISOString());
+    }
     return db()
       .prepare(`${BASE} ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY CASE lo.priority WHEN 'STAT' THEN 0 ELSE 1 END, lo.created_at DESC LIMIT ?`)
-      .all(...params, Number(limit) || 300);
+      .all(...params, clampInt(limit, 300, 1, 1000));
   },
 
   get(id) {
@@ -58,6 +63,7 @@ export const LabService = {
       const c = db().prepare('SELECT * FROM consultations WHERE id = ?').get(data.consultation_id);
       if (!c || c.patient_id !== data.patient_id) throw badRequest('Consultation does not belong to this patient');
       if (c.status !== 'IN_PROGRESS') throw conflict('Lab tests can only be ordered during an open consultation', 'CONSULTATION_CLOSED');
+      if (c.doctor_id !== actor.doctorId) throw forbidden('Lab tests can only be added to your own consultation');
     }
     if (data.admission_id) {
       const a = db().prepare('SELECT * FROM admissions WHERE id = ?').get(data.admission_id);
@@ -65,10 +71,17 @@ export const LabService = {
       if (a.status === 'DISCHARGED') throw conflict('Patient has already been discharged', 'ADMISSION_CLOSED');
     }
     const appointmentId = data.consultation_id ? db().prepare('SELECT appointment_id FROM consultations WHERE id = ?').get(data.consultation_id).appointment_id : null;
+    const testIds = [...new Set(data.test_ids)]; // the same test twice in one request is ordered once
     const ids = tx(() =>
-      data.test_ids.map((testId) => {
+      testIds.map((testId) => {
         const test = db().prepare('SELECT * FROM lab_tests WHERE id = ?').get(testId);
         if (!test) throw badRequest(`Lab test #${testId} does not exist`);
+        const pending = data.consultation_id
+          ? db().prepare("SELECT 1 FROM lab_orders WHERE consultation_id = ? AND lab_test_id = ? AND status IN ('ORDERED','SAMPLE_COLLECTED')").get(data.consultation_id, testId)
+          : data.admission_id
+            ? db().prepare("SELECT 1 FROM lab_orders WHERE admission_id = ? AND lab_test_id = ? AND status IN ('ORDERED','SAMPLE_COLLECTED')").get(data.admission_id, testId)
+            : null;
+        if (pending) throw conflict(`${test.name} is already ordered and pending for this visit`, 'DUPLICATE_LAB_ORDER');
         const info = db()
           .prepare('INSERT INTO lab_orders (patient_id, doctor_id, consultation_id, admission_id, lab_test_id, status, priority, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
           .run(data.patient_id, actor.doctorId, data.consultation_id || null, data.admission_id || null, testId, 'ORDERED', data.priority, nowIso());

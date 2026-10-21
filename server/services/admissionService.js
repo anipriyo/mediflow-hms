@@ -1,7 +1,8 @@
 import { db, tx } from '../db/connection.js';
+import { nextSequence } from '../db/sequence.js';
 import { nowIso, compactDate } from '../utils/clock.js';
 import { badRequest, conflict, forbidden, notFound } from '../utils/errors.js';
-import { validate, z, nonEmpty } from '../utils/validate.js';
+import { validate, z, nonEmpty, likeTerm } from '../utils/validate.js';
 import { canTransitionBed } from '../domain/bedStateMachine.js';
 import { canTransitionAdmission, bedCharges, dischargeClearance } from '../domain/admissionRules.js';
 import { PatientService } from './patientService.js';
@@ -39,7 +40,7 @@ export const AdmissionService = {
     const params = [];
     if (status) { const s = String(status).split(','); where.push(`ad.status IN (${s.map(() => '?').join(',')})`); params.push(...s); }
     if (patientId) { where.push('ad.patient_id = ?'); params.push(Number(patientId)); }
-    if (q) { where.push("(p.first_name || ' ' || p.last_name LIKE ? OR p.patient_code = ? OR ad.admission_no = ?)"); params.push(`%${q}%`, q, q); }
+    if (q) { where.push("(p.first_name || ' ' || p.last_name LIKE ? ESCAPE '\\' OR p.patient_code = ? OR ad.admission_no = ?)"); params.push(likeTerm(q), q, q); }
     return db().prepare(`${BASE} ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY ad.admitted_at DESC LIMIT 300`).all(...params);
   },
 
@@ -77,7 +78,7 @@ export const AdmissionService = {
       const bed = BedService.get(data.bed_id);
       if (!['AVAILABLE', 'RESERVED'].includes(bed.status)) throw conflict(`Bed ${bed.ward} ${bed.bed_no} is ${bed.status} and cannot be assigned`, 'BED_NOT_AVAILABLE');
       const now = nowIso();
-      const seq = db().prepare('SELECT COUNT(*) c FROM admissions WHERE admission_no LIKE ?').get(`ADM-${compactDate()}-%`).c + 1;
+      const seq = nextSequence('admissions', 'admission_no', `ADM-${compactDate()}-`);
       const admissionNo = `ADM-${compactDate()}-${String(seq).padStart(3, '0')}`;
       const info = db()
         .prepare("INSERT INTO admissions (admission_no, patient_id, doctor_id, bed_id, reason, status, admitted_at, created_by) VALUES (?, ?, ?, ?, ?, 'ADMITTED', ?, ?)")
@@ -111,7 +112,7 @@ export const AdmissionService = {
 
   /** FR-42: doctor requests discharge; bed charges are calculated up to now. */
   requestDischarge(id, input, actor) {
-    const { summary } = validate(z.object({ summary: z.string().trim().min(10, 'Discharge summary must be at least 10 characters') }), input);
+    const { summary } = validate(z.object({ summary: z.string().trim().min(10, 'Discharge summary must be at least 10 characters').max(5000, 'Discharge summary must be at most 5000 characters') }), input);
     const adm = this.get(id);
     if (!canTransitionAdmission(adm.status, 'DISCHARGE_PENDING')) throw conflict(`Cannot request discharge when admission is ${adm.status}`, 'INVALID_STATE');
     if (!actor.doctorId) throw forbidden('Only doctors can request discharge');

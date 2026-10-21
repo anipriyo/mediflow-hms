@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { api, getToken, setToken } from './api.js';
 
 const AuthContext = createContext(null);
@@ -15,6 +15,8 @@ export const ROLE_LABELS = {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(Boolean(getToken()));
+  const userRef = useRef(null); // the user currently signed in (null while logging out)
+  useEffect(() => { userRef.current = user; }, [user]);
 
   useEffect(() => {
     if (!getToken()) return;
@@ -22,7 +24,12 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    const onUnauthorized = () => { setToken(null); setUser(null); };
+    const onUnauthorized = () => {
+      // only explain the redirect if someone was actually working (not after a voluntary logout)
+      if (userRef.current) { try { sessionStorage.setItem('mediflow.sessionEnded', '1'); } catch { /* storage unavailable */ } }
+      setToken(null);
+      setUser(null);
+    };
     window.addEventListener('mediflow:unauthorized', onUnauthorized);
     return () => window.removeEventListener('mediflow:unauthorized', onUnauthorized);
   }, []);
@@ -35,6 +42,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
+    userRef.current = null;
     try { await api.post('/auth/logout'); } catch { /* token may already be invalid */ }
     setToken(null);
     setUser(null);

@@ -210,6 +210,14 @@ export function Alert({ tone = 'info', title, children, className }) {
 }
 
 export function ErrorState({ error, onRetry }) {
+  if (error?.status === 404 || error?.status === 403) {
+    return (
+      <Alert tone="warning" title={error.status === 404 ? 'Record not found' : 'Access denied'} className="m-4">
+        {error.message || 'The requested record does not exist.'}
+        <button type="button" className="ml-2 font-medium underline" onClick={() => window.history.back()}>Go back</button>
+      </Alert>
+    );
+  }
   return (
     <Alert tone="error" title="Could not load data" className="m-4">
       {error?.message || 'Unknown error'}

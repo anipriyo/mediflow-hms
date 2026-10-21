@@ -1,7 +1,7 @@
 import { db, tx } from '../db/connection.js';
 import { clock, nowIso, todayStr } from '../utils/clock.js';
 import { badRequest, conflict, forbidden } from '../utils/errors.js';
-import { validate, z, nonEmpty } from '../utils/validate.js';
+import { validate, z, nonEmpty, optionalDate } from '../utils/validate.js';
 import { canTransitionAppointment } from '../domain/appointmentRules.js';
 import { estimateWaits, nextToken, sortQueue } from '../domain/queueRules.js';
 import { AppointmentService } from './appointmentService.js';
@@ -25,7 +25,8 @@ export const QueueService = {
   },
 
   /** FR-22, FR-23: queue board for one doctor and day. */
-  board(doctorId, date = todayStr()) {
+  board(doctorId, dateParam) {
+    const date = optionalDate(dateParam, 'date') || todayStr();
     const doctor = DoctorService.get(doctorId);
     const all = AppointmentService.list({ doctorId, date }).filter((a) => a.status !== 'CANCELLED');
     const inProgress = all.find((a) => a.status === 'IN_CONSULTATION') || null;
@@ -55,7 +56,8 @@ export const QueueService = {
   },
 
   /** Overview of all doctors' queues for today (reception screen). */
-  overview(date = todayStr()) {
+  overview(dateParam) {
+    const date = optionalDate(dateParam, 'date') || todayStr();
     return DoctorService.list().map((d) => {
       const b = this.board(d.id, date);
       return { doctor: b.doctor, inProgress: b.inProgress, waiting: b.waiting, stats: b.stats };

@@ -332,8 +332,10 @@ function Workspace({ c, onChange, onReload }) {
     const e = {};
     items.forEach((it) => {
       if (!String(it.dosage).trim()) e[`${it.key}.dosage`] = 'Required';
-      if (!(Number(it.duration_days) >= 1)) e[`${it.key}.duration_days`] = '≥ 1';
-      if (!(Number(it.quantity) >= 1)) e[`${it.key}.quantity`] = '≥ 1';
+      const days = Number(it.duration_days);
+      const qty = Number(it.quantity);
+      if (!Number.isInteger(days) || days < 1 || days > 365) e[`${it.key}.duration_days`] = '1–365 days';
+      if (!Number.isInteger(qty) || qty < 1 || qty > 10000) e[`${it.key}.quantity`] = 'Whole number ≥ 1';
     });
     setRxErrors(e);
     if (!items.length) { toast.error('Add at least one medicine to the prescription'); return false; }

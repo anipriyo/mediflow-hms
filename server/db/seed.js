@@ -423,14 +423,15 @@ export function seedDatabase({ profile = 'demo' } = {}) {
       PEDIATRIC: ['Bronchiolitis', 'Febrile seizure', 'Acute gastroenteritis', 'Pneumonia'],
     };
     const docFor = { GENERAL: ['dr.sharma', 'dr.khan', 'dr.ghosh'], ICU: ['dr.banerjee', 'dr.reddy', 'dr.sharma'], PRIVATE: ['dr.khan', 'dr.ghosh', 'dr.banerjee'], PEDIATRIC: ['dr.iyer'] };
-    let admSeq = 0;
+    const admSeq = {}; // per-day admission numbers, like the live system
     const admit = (bed, admittedAt, status) => {
       const patient = pickInpatient(bed.type === 'PEDIATRIC');
       if (!patient) return null;
       const docUser = pick(docFor[bed.type] || docFor.GENERAL);
-      admSeq += 1;
+      const admDay = compactDate(admittedAt);
+      admSeq[admDay] = (admSeq[admDay] || 0) + 1;
       const admId = insert('admissions', {
-        admission_no: `ADM-${compactDate(admittedAt)}-${String(admSeq).padStart(3, '0')}`, patient_id: patient.id, doctor_id: ids.doctors[docUser], bed_id: bed.id,
+        admission_no: `ADM-${admDay}-${String(admSeq[admDay]).padStart(3, '0')}`, patient_id: patient.id, doctor_id: ids.doctors[docUser], bed_id: bed.id,
         reason: pick(REASONS[bed.type] || REASONS.GENERAL), status, admitted_at: iso(admittedAt), created_by: recUser,
       });
       insert('bed_stays', { admission_id: admId, bed_id: bed.id, daily_rate: bed.rate, start_at: iso(admittedAt) });

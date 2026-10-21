@@ -68,15 +68,15 @@ export default function PatientDetail() {
             <Avatar name={p.full_name} size="lg" />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl font-semibold text-slate-900">{p.full_name}</h1>
+                <h1 className="min-w-0 text-xl font-semibold text-slate-900 [overflow-wrap:anywhere]">{p.full_name}</h1>
                 <Badge color="teal" className="font-mono">{p.patient_code}</Badge>
                 {p.blood_group && <Badge color="red"><Droplet className="h-3 w-3" />{p.blood_group}</Badge>}
               </div>
               <p className="mt-1 text-sm text-slate-500">{p.age} years · {p.gender.toLowerCase()} · born {fmtDate(p.dob)} · registered {fmtDate(p.created_at)}</p>
               <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-600">
                 <span className="inline-flex items-center gap-1.5"><Phone className="h-4 w-4 text-slate-400" />{p.phone}</span>
-                {p.email && <span className="inline-flex items-center gap-1.5"><Mail className="h-4 w-4 text-slate-400" />{p.email}</span>}
-                {p.address && <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4 text-slate-400" />{p.address}</span>}
+                {p.email && <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 [overflow-wrap:anywhere]"><Mail className="h-4 w-4 shrink-0 text-slate-400" />{p.email}</span>}
+                {p.address && <span className="inline-flex min-w-0 max-w-full items-start gap-1.5 [overflow-wrap:anywhere]"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />{p.address}</span>}
               </div>
               {p.allergies && <Alert tone="warning" className="mt-3 inline-flex"><span className="font-semibold">Allergy:</span> {p.allergies}</Alert>}
             </div>

@@ -1,7 +1,8 @@
 import { db, tx } from '../db/connection.js';
-import { clock, nowIso, todayStr } from '../utils/clock.js';
+import { clock, nowIso, todayStr, toTimeStr } from '../utils/clock.js';
 import { badRequest, conflict, notFound } from '../utils/errors.js';
-import { validate, z, dateStr, timeStr, nonEmpty } from '../utils/validate.js';
+import { validate, z, dateStr, timeStr, nonEmpty, likeTerm, clampInt, optionalDate } from '../utils/validate.js';
+import { timeToMinutes } from '../domain/time.js';
 import { validateSlot, findConflict, endTimeFor, canTransitionAppointment, ACTIVE_STATUSES } from '../domain/appointmentRules.js';
 import { DoctorService } from './doctorService.js';
 import { PatientService } from './patientService.js';
@@ -32,6 +33,7 @@ function activeFor(column, id, date) {
 
 /** Shared slot + conflict checks for booking and rescheduling (FR-16, FR-17). */
 function assertBookable({ doctor, patientId, date, startTime, excludeId = null }) {
+  if (!doctor.active) throw conflict(`${doctor.full_name} is not currently available for appointments (account inactive)`, 'DOCTOR_INACTIVE');
   const problems = validateSlot({ doctor, date, startTime, now: clock.now() });
   if (problems.length) throw badRequest(problems[0], { start_time: problems.join('; ') });
   const endTime = endTimeFor(doctor, startTime);
@@ -51,6 +53,9 @@ export const AppointmentService = {
   list({ date, from, to, doctorId, patientId, status, q, limit = 500 } = {}) {
     const where = [];
     const params = [];
+    date = optionalDate(date, 'date');
+    from = optionalDate(from, 'from');
+    to = optionalDate(to, 'to');
     if (date) { where.push('a.date = ?'); params.push(date); }
     if (from) { where.push('a.date >= ?'); params.push(from); }
     if (to) { where.push('a.date <= ?'); params.push(to); }
@@ -62,12 +67,12 @@ export const AppointmentService = {
       params.push(...list);
     }
     if (q) {
-      where.push("(p.first_name || ' ' || p.last_name LIKE ? OR p.patient_code = ? OR u.full_name LIKE ?)");
-      params.push(`%${q}%`, q, `%${q}%`);
+      where.push("(p.first_name || ' ' || p.last_name LIKE ? ESCAPE '\\' OR p.patient_code = ? OR u.full_name LIKE ? ESCAPE '\\')");
+      params.push(likeTerm(q), String(q), likeTerm(q));
     }
     return db()
       .prepare(`${BASE} ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY a.date DESC, a.start_time ASC LIMIT ?`)
-      .all(...params, Math.min(Number(limit) || 500, 2000));
+      .all(...params, clampInt(limit, 500, 1, 2000));
   },
 
   get(id) {
@@ -122,6 +127,9 @@ export const AppointmentService = {
     const appt = this.get(id);
     if (!canTransitionAppointment(appt.status, 'NO_SHOW')) throw conflict(`Cannot mark ${appt.status} appointment as no-show`, 'INVALID_STATE');
     if (appt.date > todayStr()) throw badRequest('Cannot mark a future appointment as no-show');
+    if (appt.date === todayStr() && timeToMinutes(appt.start_time) > timeToMinutes(toTimeStr(clock.now()))) {
+      throw badRequest(`The appointment starts at ${appt.start_time}; it can only be marked as no-show after its start time`);
+    }
     db().prepare("UPDATE appointments SET status = 'NO_SHOW' WHERE id = ?").run(id);
     AuditService.log(actor, 'STATUS_CHANGE', 'Appointment', id, 'SCHEDULED → NO_SHOW');
     return this.get(id);

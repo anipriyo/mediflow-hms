@@ -30,9 +30,20 @@ async function request(method, path, body, { query } = {}) {
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
   if (body !== undefined) headers['Content-Type'] = 'application/json';
-  const res = await fetch(url, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined });
+  let res;
+  try {
+    res = await fetch(url, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined });
+  } catch {
+    throw new ApiError(0, { error: 'Cannot reach the MediFlow server. Check that it is running and try again.', code: 'NETWORK' });
+  }
   const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    // e.g. an HTML error page from a proxy when the API server is down
+    throw new ApiError(res.status, { error: res.status >= 500 ? 'The server is not responding correctly. Please try again in a moment.' : `Unexpected response from the server (${res.status})`, code: 'BAD_RESPONSE' });
+  }
   if (!res.ok) {
     if (res.status === 401 && path !== '/auth/login') window.dispatchEvent(new CustomEvent('mediflow:unauthorized'));
     throw new ApiError(res.status, data);

@@ -1,4 +1,6 @@
 import { db } from '../db/connection.js';
+import { optionalDate } from '../utils/validate.js';
+import { badRequest } from '../utils/errors.js';
 import { todayStr, addDays, combineLocal } from '../utils/clock.js';
 import { round2 } from '../domain/money.js';
 import { can } from '../domain/permissions.js';
@@ -118,8 +120,10 @@ export const ReportService = {
   /** FR-49: management reports for a date range */
   summary({ from, to } = {}) {
     const today = todayStr();
-    const t = to || today;
-    const f = from || addDays(t, -13);
+    const t = optionalDate(to, 'to') || today;
+    const f = optionalDate(from, 'from') || addDays(t, -13);
+    if (f > t) throw badRequest('"from" date must not be after "to" date', { from: 'Must be on or before the "to" date' });
+    if (combineLocal(t).getTime() - combineLocal(f).getTime() > 366 * 86_400_000) throw badRequest('The report period cannot exceed 366 days', { from: 'Range too long' });
     const [start] = dayRange(f);
     const [, end] = dayRange(t);
     const appointments = appointmentsByDay(f, t);

@@ -1,7 +1,7 @@
 import { db, tx } from '../db/connection.js';
 import { nowIso, todayStr } from '../utils/clock.js';
 import { badRequest, conflict, forbidden, notFound } from '../utils/errors.js';
-import { validate, z, dateStr } from '../utils/validate.js';
+import { validate, z, dateStr, clampInt } from '../utils/validate.js';
 import { AppointmentService } from './appointmentService.js';
 import { PatientService } from './patientService.js';
 import { ChargeService } from './chargeService.js';
@@ -80,7 +80,7 @@ export const ConsultationService = {
                 FROM consultations c JOIN appointments a ON a.id = c.appointment_id JOIN patients p ON p.id = c.patient_id
                 JOIN doctors d ON d.id = c.doctor_id JOIN users u ON u.id = d.user_id
                 ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY c.created_at DESC LIMIT ?`)
-      .all(...params, Number(limit) || 100);
+      .all(...params, clampInt(limit, 100, 1, 500));
   },
 
   assertOwnOpen(consultation, actor) {
@@ -103,8 +103,11 @@ export const ConsultationService = {
   savePrescription(id, input, actor) {
     const c = this.get(id);
     this.assertOwnOpen(c, actor);
-    const { items } = validate(z.object({ items: z.array(itemSchema).min(1, 'Add at least one medicine') }), input);
+    const { items } = validate(z.object({ items: z.array(itemSchema).min(1, 'Add at least one medicine').max(30, 'A prescription can have at most 30 medicines') }), input);
+    const seen = new Set();
     for (const it of items) {
+      if (seen.has(it.medicine_id)) throw badRequest('Each medicine can appear only once in a prescription – adjust the quantity instead', { items: 'Duplicate medicine' });
+      seen.add(it.medicine_id);
       if (!db().prepare('SELECT 1 FROM medicines WHERE id = ?').get(it.medicine_id)) throw badRequest(`Medicine #${it.medicine_id} does not exist`);
     }
     const prescId = tx(() => {

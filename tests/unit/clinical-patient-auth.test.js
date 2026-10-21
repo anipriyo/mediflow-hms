@@ -136,3 +136,29 @@ describe('Authentication & access control (AUTH)', () => {
     expect(r[1]).toBeNull();
   });
 });
+
+describe('Input normalisation (robustness)', async () => {
+  const { isRealDate } = await import('../../server/domain/time.js');
+  const { normalizePhone } = await import('../../server/domain/patientRules.js');
+  const { clampInt, likeTerm } = await import('../../server/utils/validate.js');
+
+  tc({ id: 'UT-PAT-06', level: U, fr: ['FR-08'], title: 'Only real calendar dates are accepted', input: '2026-02-28, 2028-02-29 (leap), 2026-02-30, 2026-13-01, 0000-00-00', expected: 'true, true, false, false, false' }, (note) => {
+    const r = ['2026-02-28', '2028-02-29', '2026-02-30', '2026-13-01', '0000-00-00'].map(isRealDate);
+    note(r.join(', '));
+    expect(r).toEqual([true, true, false, false, false]);
+  });
+
+  tc({ id: 'UT-PAT-07', level: U, fr: ['FR-08'], title: 'Mobile numbers typed in common formats are normalised to 10 digits', input: '"+91 98765 43210", "098765-43210", "(98765) 43210", "12345"', expected: '9876543210 ×3, "12345" unchanged (later rejected)' }, (note) => {
+    const r = ['+91 98765 43210', '098765-43210', '(98765) 43210', '12345'].map(normalizePhone);
+    note(r.join(', '));
+    expect(r).toEqual(['9876543210', '9876543210', '9876543210', '12345']);
+  });
+
+  tc({ id: 'UT-PAT-08', level: U, fr: ['FR-10'], title: 'Paging values are clamped and search wildcards are escaped', input: 'clampInt(-5,50,1,500), clampInt("abc",50,1,500), clampInt(99999,50,1,500); likeTerm("50%_off")', expected: '1, 50, 500; "%50\\%\\_off%"' }, (note) => {
+    const r = [clampInt(-5, 50, 1, 500), clampInt('abc', 50, 1, 500), clampInt(99999, 50, 1, 500)];
+    const l = likeTerm('50%_off');
+    note(`${r.join(', ')}; ${l}`);
+    expect(r).toEqual([1, 50, 500]);
+    expect(l).toBe('%50\\%\\_off%');
+  });
+});
