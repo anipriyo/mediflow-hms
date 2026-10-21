@@ -70,7 +70,7 @@ export const BillingService = {
     if (q) { where.push("(i.invoice_no LIKE ? OR p.patient_code = ? OR p.first_name || ' ' || p.last_name LIKE ?)"); params.push(`%${q}%`, q, `%${q}%`); }
     if (from) { where.push('i.created_at >= ?'); params.push(new Date(`${from}T00:00:00`).toISOString()); }
     if (to) { where.push('i.created_at <= ?'); params.push(new Date(`${to}T23:59:59.999`).toISOString()); }
-    return db().prepare(`${BASE} ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY i.id DESC LIMIT ?`).all(...params, Number(limit) || 300);
+    return db().prepare(`${BASE} ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY i.created_at DESC, i.id DESC LIMIT ?`).all(...params, Number(limit) || 300);
   },
 
   get(id) {
@@ -142,7 +142,9 @@ export const BillingService = {
                 FROM payments pay JOIN invoices i ON i.id = pay.invoice_id JOIN patients p ON p.id = i.patient_id LEFT JOIN users u ON u.id = pay.received_by WHERE pay.id = ?`)
       .get(paymentId);
     if (!r) throw notFound('Receipt');
-    return { ...r, balance_after: round2(r.total - r.paid_amount) };
+    // Balance immediately after this payment (not the invoice's current balance)
+    const paidUpTo = db().prepare('SELECT COALESCE(SUM(amount), 0) s FROM payments WHERE invoice_id = ? AND id <= ?').get(r.invoice_id, r.id).s;
+    return { ...r, paid_until_this: round2(paidUpTo), balance_after: round2(r.total - paidUpTo) };
   },
 
   methods() {

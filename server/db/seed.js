@@ -268,9 +268,10 @@ export function seedDatabase({ profile = 'demo' } = {}) {
       let patient;
       for (let k = 0; k < 20; k++) {
         patient = opts.patient || pick(doc.department === 'Paediatrics' ? patients.filter((p) => (now.getFullYear() - Number(p.dob.slice(0, 4))) <= 14) : patients);
-        if (!busy.has(`${patient.id}|${dateStr}|${slot.start}`)) break;
+        if (!busy.has(`${patient.id}|${dateStr}|${slot.start}`) && !busy.has(`${patient.id}|${dateStr}|doc${doc.id}`)) break;
       }
       busy.add(`${patient.id}|${dateStr}|${slot.start}`);
+      busy.add(`${patient.id}|${dateStr}|doc${doc.id}`);
       const slotStart = combineLocal(dateStr, slot.start);
       const row = {
         patient_id: patient.id, doctor_id: doc.id, date: dateStr, start_time: slot.start, end_time: slot.end,

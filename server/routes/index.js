@@ -90,7 +90,7 @@ export function buildRouter() {
   // ── Laboratory (FR-31 … FR-34) ─────────────────────────────────
   r.get('/lab/tests', allow('lab:read', 'lab:order'), h(() => LabService.tests()));
   r.get('/lab/orders', allow('lab:read'), h((req) => LabService.orders(req.query)));
-  r.get('/lab/stats', allow('lab:read'), h(() => LabService.stats()));
+  r.get('/lab/stats', allow('lab:read'), h((req) => LabService.stats(req.query)));
   r.post('/lab/orders', allow('lab:order'), h((req) => LabService.order(req.body, req.user), 201));
   r.get('/lab/orders/:id', allow('lab:read'), h((req) => LabService.get(Number(req.params.id))));
   r.post('/lab/orders/:id/collect', allow('lab:process'), h((req) => LabService.collect(Number(req.params.id), req.user)));

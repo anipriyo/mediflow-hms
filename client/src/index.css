@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { -webkit-tap-highlight-color: transparent; }
+  body { font-feature-settings: 'cv11', 'ss01'; }
+  ::selection { background: #c9f6ec; }
+}
+
+@layer components {
+  .card { @apply rounded-xl border border-slate-200 bg-white shadow-card; }
+  .input {
+    @apply block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400
+      focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:bg-slate-100 disabled:text-slate-500;
+  }
+  .input-error { @apply border-rose-400 focus:border-rose-500 focus:ring-rose-500/20; }
+  .label { @apply mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500; }
+  .th { @apply whitespace-nowrap px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500; }
+  .td { @apply px-4 py-3 align-middle text-sm text-slate-700; }
+  .link { @apply font-medium text-brand-700 hover:text-brand-800 hover:underline; }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff !important; }
+  .print-sheet { box-shadow: none !important; border: none !important; margin: 0 !important; max-width: none !important; }
+}

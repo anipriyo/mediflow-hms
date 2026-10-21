@@ -120,6 +120,8 @@ export const AdmissionService = {
       db().prepare('UPDATE bed_stays SET end_at = ? WHERE admission_id = ? AND end_at IS NULL').run(now, id);
       const stays = db().prepare('SELECT s.*, b.bed_no, w.name AS ward FROM bed_stays s JOIN beds b ON b.id = s.bed_id JOIN wards w ON w.id = b.ward_id WHERE s.admission_id = ? AND s.charged = 0').all(id);
       for (const s of bedCharges(stays, now)) {
+        db().prepare('UPDATE bed_stays SET charged = 1 WHERE id = ?').run(s.id);
+        if (s.days === 0) continue; // a short stay before a transfer is absorbed into the other stay (DEF-05)
         ChargeService.add({
           patientId: adm.patient_id,
           admissionId: id,
@@ -129,7 +131,6 @@ export const AdmissionService = {
           quantity: s.days,
           unitPrice: s.daily_rate,
         });
-        db().prepare('UPDATE bed_stays SET charged = 1 WHERE id = ?').run(s.id);
       }
       db().prepare("UPDATE admissions SET status = 'DISCHARGE_PENDING', discharge_requested_at = ?, discharge_summary = ? WHERE id = ?").run(now, summary, id);
     });

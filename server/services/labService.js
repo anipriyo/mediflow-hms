@@ -135,8 +135,10 @@ export const LabService = {
     return this.get(id);
   },
 
-  stats() {
-    const rows = db().prepare('SELECT status, COUNT(*) n FROM lab_orders GROUP BY status').all();
+  stats({ doctorId } = {}) {
+    const rows = doctorId
+      ? db().prepare('SELECT status, COUNT(*) n FROM lab_orders WHERE doctor_id = ? GROUP BY status').all(Number(doctorId))
+      : db().prepare('SELECT status, COUNT(*) n FROM lab_orders GROUP BY status').all();
     return Object.fromEntries(rows.map((r) => [r.status, r.n]));
   },
 };

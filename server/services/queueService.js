@@ -20,7 +20,7 @@ export const QueueService = {
       db().prepare("UPDATE appointments SET status = 'CHECKED_IN', token_no = ?, checked_in_at = ? WHERE id = ?").run(t, nowIso(), appt.id);
       return t;
     });
-    AuditService.log(actor, 'CHECK_IN', 'Appointment', appt.id, `Checked in ${appt.patient_code}, token ${token} for Dr. ${appt.doctor_name}`);
+    AuditService.log(actor, 'CHECK_IN', 'Appointment', appt.id, `Checked in ${appt.patient_code}, token ${token} for ${appt.doctor_name}`);
     return AppointmentService.get(appt.id);
   },
 

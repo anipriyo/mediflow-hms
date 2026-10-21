@@ -18,12 +18,23 @@ export function bedDays(startIso, endIso) {
   return Math.max(1, Math.ceil(hours / 24));
 }
 
-/** Charges for each bed stay of an admission. */
+/**
+ * Charges for each bed stay of an admission.
+ * The admission as a whole is billed max(1, ceil(totalHours / 24)) bed-days (BR-09); those days are
+ * shared between the stays in proportion to the time spent in each bed (largest-remainder method),
+ * so a transfer never creates an extra "minimum day" (fix for DEF-05).
+ */
 export function bedCharges(stays, endIso) {
-  return stays.map((s) => {
-    const days = bedDays(s.start_at, s.end_at || endIso);
-    return { ...s, days, amount: round2(days * s.daily_rate) };
-  });
+  if (!stays.length) return [];
+  const hours = stays.map((s) => Math.max(0, new Date(s.end_at || endIso).getTime() - new Date(s.start_at).getTime()) / 3_600_000);
+  const totalHours = hours.reduce((a, b) => a + b, 0);
+  const totalDays = Math.max(1, Math.ceil(totalHours / 24));
+  const exact = hours.map((h) => (totalHours > 0 ? (h / totalHours) * totalDays : totalDays / stays.length));
+  const days = exact.map(Math.floor);
+  let remaining = totalDays - days.reduce((a, b) => a + b, 0);
+  const order = exact.map((v, i) => [v - Math.floor(v), hours[i], i]).sort((a, b) => b[0] - a[0] || b[1] - a[1]);
+  for (let k = 0; remaining > 0; k = (k + 1) % order.length, remaining -= 1) days[order[k][2]] += 1;
+  return stays.map((s, i) => ({ ...s, days: days[i], amount: round2(days[i] * s.daily_rate) }));
 }
 
 /**

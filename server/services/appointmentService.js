@@ -37,7 +37,7 @@ function assertBookable({ doctor, patientId, date, startTime, excludeId = null }
   const endTime = endTimeFor(doctor, startTime);
   const doctorClash = findConflict(activeFor('doctor_id', doctor.id, date), { date, startTime, endTime, excludeId });
   if (doctorClash) {
-    throw conflict(`Dr. ${doctor.full_name} already has an appointment at ${doctorClash.start_time} on ${date}`, 'DOCTOR_SLOT_TAKEN', { conflictingAppointmentId: doctorClash.id });
+    throw conflict(`${doctor.full_name} already has an appointment at ${doctorClash.start_time} on ${date}`, 'DOCTOR_SLOT_TAKEN', { conflictingAppointmentId: doctorClash.id });
   }
   const patientClash = findConflict(activeFor('patient_id', patientId, date), { date, startTime, endTime, excludeId });
   if (patientClash) {
@@ -88,7 +88,7 @@ export const AppointmentService = {
                   VALUES (?, ?, ?, ?, ?, ?, 'SCHEDULED', ?, ?)`)
         .run(patient.id, doctor.id, data.date, data.start_time, endTime, data.reason || null, actor.id, nowIso()).lastInsertRowid;
     });
-    AuditService.log(actor, 'CREATE', 'Appointment', id, `Booked ${patient.patient_code} with Dr. ${doctor.full_name} on ${data.date} ${data.start_time}`);
+    AuditService.log(actor, 'CREATE', 'Appointment', id, `Booked ${patient.patient_code} with ${doctor.full_name} on ${data.date} ${data.start_time}`);
     return this.get(id);
   },
 
@@ -102,7 +102,7 @@ export const AppointmentService = {
       const endTime = assertBookable({ doctor, patientId: appt.patient_id, date: data.date, startTime: data.start_time, excludeId: appt.id });
       db().prepare('UPDATE appointments SET doctor_id = ?, date = ?, start_time = ?, end_time = ? WHERE id = ?').run(doctor.id, data.date, data.start_time, endTime, id);
     });
-    AuditService.log(actor, 'RESCHEDULE', 'Appointment', id, `Moved from ${appt.date} ${appt.start_time} to ${data.date} ${data.start_time}${doctor.id !== appt.doctor_id ? ` with Dr. ${doctor.full_name}` : ''}`);
+    AuditService.log(actor, 'RESCHEDULE', 'Appointment', id, `Moved from ${appt.date} ${appt.start_time} to ${data.date} ${data.start_time}${doctor.id !== appt.doctor_id ? ` with ${doctor.full_name}` : ''}`);
     return this.get(id);
   },
 
