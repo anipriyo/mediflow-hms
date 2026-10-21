@@ -1,0 +1,10 @@
+node_modules/
+client/dist/
+data/*.db
+data/*.db-*
+test-results/
+playwright-report/
+coverage/
+.DS_Store
+*.log
+docs/report/build/
