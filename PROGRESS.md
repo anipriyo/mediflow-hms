@@ -11,9 +11,9 @@ Stack: React 18 + Vite 5 + Tailwind 3 · Express 4 + better-sqlite3 · JWT + bcr
 - [x] 1. Requirements frozen (docs/spec/requirements.json)
 - [x] 2. Backend (server/: domain rules, services, routes, seed)
 - [x] 3. Frontend (client/src)
-- [ ] 4. Tests (tests/unit, tests/integration, tests/e2e) + results JSON
-- [ ] 5. UML (docs/uml/*.puml → png)
-- [ ] 6. Report (docs/report → DOCX + PDF)
+- [x] 4. Tests (tests/unit, tests/integration, tests/e2e) + results JSON
+- [x] 5. UML (docs/uml/*.puml → png)
+- [~] 6. Report generator done (npm run report → docs/report/build/*.docx/pdf); regenerate after final test run
 - [ ] 7. Verify, zip, sync to Mac SW_Project, save to Project
 
 ## Notes
@@ -22,3 +22,4 @@ Stack: React 18 + Vite 5 + Tailwind 3 · Express 4 + better-sqlite3 · JWT + bcr
 - Scheduled resume check-in: trig_01RSy2v9X9QFht4FwDeBJyKR at 21:57Z.
 - Sync method: tar (excl node_modules/dist/db) → /mnt/user-data/outputs → SendUserFile → device_commit_files to SW_Project/.sync/ → device_bash `tar --overwrite -xzf`.
 - Defects log: docs/spec/defects.json (DEF-01..08). Test IDs referenced there must exist: IT-APT-03, IT-BIL-07, UT-IPD-05, UT-IPD-06, IT-IPD-06, IT-LAB-06, IT-IPD-02, ST-BIL-01.
+- 8. Edge-case/hardening pass requested by user (after everything) – then final: `npx vitest run --coverage` THEN `PW_CHROMIUM=/opt/pw-browsers/chromium-1194/chrome-linux/chrome npx playwright test` (vitest clears actuals.jsonl), then `npm run report`.

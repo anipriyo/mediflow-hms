@@ -1,13 +1,28 @@
 {
-  "groupNumber": "[Group No.]",
+  "groupNumber": "11",
   "assignmentNumber": 1,
   "assignmentTitle": "Hospital Management System",
   "projectName": "MediFlow",
   "members": [
-    {"name": "Akash Chakraborty", "reg": "CSE/23011/1059"},
-    {"name": "Anipriyo Mandal", "reg": "CSE/23017/1065"},
-    {"name": "Arpan Mandal", "reg": "CSE/23027/1075"},
-    {"name": "Himanshu Patel", "reg": "CSE/23052/1100"},
-    {"name": "Pranjali Sirari", "reg": "CSE/23072/1120"}
+    {
+      "name": "Akash Chakraborty",
+      "reg": "CSE/23011/1059"
+    },
+    {
+      "name": "Anipriyo Mandal",
+      "reg": "CSE/23017/1065"
+    },
+    {
+      "name": "Arpan Mandal",
+      "reg": "CSE/23027/1075"
+    },
+    {
+      "name": "Himanshu Patel",
+      "reg": "CSE/23052/1100"
+    },
+    {
+      "name": "Pranjali Sirari",
+      "reg": "CSE/23072/1120"
+    }
   ]
 }

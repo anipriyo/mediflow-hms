@@ -24,7 +24,7 @@ package "Application tier – Node.js 20+ (Express 4)" {
   SVC --> DAL
 }
 
-database "Data tier – SQLite\n(mediflow.db, WAL mode)\n18 tables + append-only\naudit triggers" as DB
+database "Data tier – SQLite\n(mediflow.db, WAL mode)\n20 tables + append-only\naudit triggers" as DB
 
 CLIENT --> ROUTER : HTTPS · JSON\nBearer JWT
 SPA ..> STATIC : loads bundle
