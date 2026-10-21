@@ -19,6 +19,7 @@ export default defineConfig({
     root: '.',
     include: ['tests/unit/**/*.test.js', 'tests/integration/**/*.test.js'],
     environment: 'node',
+    globalSetup: ['tests/helpers/globalSetup.js'],
     pool: 'forks',
     poolOptions: { forks: { singleFork: true } },
     reporters: ['default', 'json'],
