@@ -1,0 +1,32 @@
+@startuml
+!include _style.iuml
+title System Architecture – Layered client–server design
+skinparam componentStyle uml2
+
+package "Client tier – Web browser" {
+  [React 18 SPA\n(Vite + Tailwind)] as SPA
+  [Pages: Dashboard, Patients, Appointments,\nQueue, Consultation, Lab, Pharmacy,\nBeds, Billing, Reports, Users, Audit] as PAGES
+  [AuthContext + ApiClient] as CLIENT
+  SPA --> PAGES
+  PAGES --> CLIENT
+}
+
+package "Application tier – Node.js 20+ (Express 4)" {
+  [Static file server\n(built SPA)] as STATIC
+  [REST API router\n/api/*] as ROUTER
+  [Security middleware\nJWT authentication · RBAC authorisation\nsecurity headers · JSON validation] as MW
+  [Service layer\nPatient · Appointment · Queue · Consultation\nLab · Pharmacy · Bed · Admission · Billing\nCharge · Report · Audit · Auth · User · Doctor] as SVC
+  [Domain rules (pure functions)\nslots · queue ETA · state machines\nbilling · inventory · permissions] as DOMAIN
+  [Data access\nbetter-sqlite3 prepared statements\ntransactions] as DAL
+  ROUTER --> MW
+  MW --> SVC
+  SVC --> DOMAIN
+  SVC --> DAL
+}
+
+database "Data tier – SQLite\n(mediflow.db, WAL mode)\n18 tables + append-only\naudit triggers" as DB
+
+CLIENT --> ROUTER : HTTPS · JSON\nBearer JWT
+SPA ..> STATIC : loads bundle
+DAL --> DB
+@enduml

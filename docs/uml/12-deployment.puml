@@ -1,0 +1,19 @@
+@startuml
+!include _style.iuml
+title Deployment Diagram
+node "Staff workstation / tablet" as WS {
+  artifact "Web browser\n(Chrome / Edge / Firefox / Safari)" as BR
+}
+node "Hospital application server\n(Windows / macOS / Linux)" as SRV {
+  node "Node.js 20+ runtime" as NODE {
+    artifact "mediflow server\n(server/index.js)" as APP
+    artifact "client/dist\n(static SPA bundle)" as DIST
+  }
+  database "data/mediflow.db\n(SQLite)" as SQL
+}
+node "Printer" as PR
+BR --> APP : HTTP(S) :4000 /api
+BR --> DIST : HTTP(S) :4000 /
+APP --> SQL : file I/O (transactions)
+BR ..> PR : print invoice / receipt
+@enduml

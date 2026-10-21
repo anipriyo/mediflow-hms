@@ -1,0 +1,262 @@
+@startuml
+!include _style.iuml
+title MediFlow HMS – Domain Class Diagram
+hide empty members
+skinparam linetype ortho
+
+enum Role {
+  ADMIN
+  RECEPTIONIST
+  DOCTOR
+  LAB_TECH
+  PHARMACIST
+  BILLING
+}
+
+class User {
+  - id : int
+  - username : String
+  - passwordHash : String
+  - fullName : String
+  - role : Role
+  - active : boolean
+  - failedAttempts : int
+  - lockedUntil : DateTime
+  + login(password) : Session
+  + logout() : void
+  + can(permission) : boolean
+}
+
+class Session {
+  - jti : UUID
+  - createdAt : DateTime
+  - expiresAt : DateTime
+  - revokedAt : DateTime
+}
+
+class Department {
+  - id : int
+  - name : String
+  - description : String
+}
+
+class Doctor {
+  - id : int
+  - specialization : String
+  - qualification : String
+  - consultationFee : Money
+  - avgConsultMinutes : int
+  - slotMinutes : int
+  - workStart : Time
+  - workEnd : Time
+  - workDays : Set<DayOfWeek>
+  - room : String
+  + freeSlots(date) : List<Slot>
+}
+
+class Patient {
+  - id : int
+  - patientCode : String  <<P00001>>
+  - firstName : String
+  - lastName : String
+  - gender : Gender
+  - dob : Date
+  - phone : String
+  - email : String
+  - bloodGroup : String
+  - allergies : String
+  - emergencyContact : String
+  + age() : int
+  + history() : PatientHistory
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CHECKED_IN
+  IN_CONSULTATION
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+class Appointment {
+  - id : int
+  - date : Date
+  - startTime : Time
+  - endTime : Time
+  - reason : String
+  - status : AppointmentStatus
+  - tokenNo : int
+  - priority : NORMAL | URGENT
+  - checkedInAt : DateTime
+  + reschedule(date, time) : void
+  + cancel(reason) : void
+  + checkIn() : int
+  + markUrgent(reason) : void
+}
+
+class Consultation {
+  - id : int
+  - symptoms : String
+  - vitals : Vitals
+  - diagnosis : String
+  - notes : String
+  - followUpDate : Date
+  - status : IN_PROGRESS | COMPLETED
+  + save(details) : void
+  + complete() : void
+}
+
+class Prescription {
+  - id : int
+  - status : PENDING | DISPENSED
+  - dispensedAt : DateTime
+  + dispense() : void
+}
+
+class PrescriptionItem {
+  - dosage : String
+  - frequency : String
+  - durationDays : int
+  - quantity : int
+  - instructions : String
+}
+
+class Medicine {
+  - id : int
+  - name : String
+  - strength : String
+  - unitPrice : Money
+  - stockQty : int
+  - reorderLevel : int
+  - batchNo : String
+  - expiryDate : Date
+  + isLowStock() : boolean
+  + expiryStatus() : String
+  + restock(qty, batch, expiry) : void
+}
+
+class LabTest {
+  - code : String
+  - name : String
+  - price : Money
+  - unit : String
+  - refLow : decimal
+  - refHigh : decimal
+}
+
+class LabOrder {
+  - id : int
+  - status : LabOrderStatus
+  - priority : ROUTINE | STAT
+  - resultValue : decimal
+  - resultText : String
+  - isAbnormal : boolean
+  + collectSample() : void
+  + recordResult(value, text) : void
+  + cancel(reason) : void
+}
+
+class Ward {
+  - name : String
+  - type : WardType
+  - dailyRate : Money
+}
+
+enum BedStatus {
+  AVAILABLE
+  RESERVED
+  OCCUPIED
+  CLEANING
+  MAINTENANCE
+}
+
+class Bed {
+  - bedNo : String
+  - status : BedStatus
+  + changeStatus(to) : void
+}
+
+class Admission {
+  - admissionNo : String
+  - reason : String
+  - status : ADMITTED | DISCHARGE_PENDING | DISCHARGED
+  - admittedAt : DateTime
+  - dischargeSummary : String
+  - overrideReason : String
+  + transfer(bed) : void
+  + requestDischarge(summary) : void
+  + discharge(override) : void
+}
+
+class BedStay {
+  - dailyRate : Money
+  - startAt : DateTime
+  - endAt : DateTime
+  + days() : int
+}
+
+class Charge {
+  - sourceType : CONSULTATION | LAB | MEDICINE | BED
+  - description : String
+  - quantity : decimal
+  - unitPrice : Money
+  - amount : Money
+}
+
+class Invoice {
+  - invoiceNo : String
+  - subtotal : Money
+  - discountPct : decimal
+  - total : Money
+  - paidAmount : Money
+  - status : InvoiceStatus
+  + applyDiscount(pct, reason) : void
+  + recordPayment(amount, method) : Payment
+  + balance() : Money
+  + cancel(reason) : void
+}
+
+class Payment {
+  - receiptNo : String
+  - amount : Money
+  - method : CASH | CARD | UPI
+  - reference : String
+  - receivedAt : DateTime
+}
+
+class AuditLog {
+  - ts : DateTime
+  - action : String
+  - entity : String
+  - entityId : String
+  - summary : String
+}
+
+User "1" -- "0..*" Session
+User "1" -- "0..1" Doctor : profile >
+Department "1" -- "1..*" Doctor
+Patient "1" -- "0..*" Appointment : books >
+Doctor "1" -- "0..*" Appointment : attends >
+Appointment "1" -- "0..1" Consultation
+Consultation "1" -- "0..1" Prescription
+Prescription "1" *-- "1..*" PrescriptionItem
+PrescriptionItem "0..*" --> "1" Medicine
+Consultation "0..1" -- "0..*" LabOrder
+LabOrder "0..*" --> "1" LabTest
+Patient "1" -- "0..*" LabOrder
+Ward "1" *-- "1..*" Bed
+Patient "1" -- "0..*" Admission
+Admission "1" *-- "1..*" BedStay
+BedStay "0..*" --> "1" Bed
+Admission "0..1" -- "0..*" LabOrder
+Doctor "1" -- "0..*" Admission : attending >
+Patient "1" -- "0..*" Charge
+Invoice "0..1" o-- "1..*" Charge
+Invoice "1" *-- "0..*" Payment
+Patient "1" -- "0..*" Invoice
+User "0..1" -- "0..*" AuditLog : performs >
+Appointment ..> AppointmentStatus
+Bed ..> BedStatus
+User ..> Role
+@enduml

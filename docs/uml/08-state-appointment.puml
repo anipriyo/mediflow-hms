@@ -1,0 +1,18 @@
+@startuml
+!include _style.iuml
+title State Diagram – Appointment
+[*] --> SCHEDULED : book() [slot free, in working hours, not past]
+SCHEDULED --> SCHEDULED : reschedule() [new slot free]
+SCHEDULED --> CHECKED_IN : checkIn() [date = today] / issue token
+SCHEDULED --> CANCELLED : cancel(reason)
+SCHEDULED --> NO_SHOW : markNoShow() [date <= today]
+CHECKED_IN --> CHECKED_IN : markUrgent(reason) / priority = URGENT
+CHECKED_IN --> IN_CONSULTATION : callNext() [doctor free, first in queue]
+IN_CONSULTATION --> COMPLETED : complete() [diagnosis recorded] / add consultation fee
+COMPLETED --> [*]
+CANCELLED --> [*]
+NO_SHOW --> [*]
+state SCHEDULED : occupies slot
+state CHECKED_IN : waiting in queue\nETA = ahead × avg + remaining
+state IN_CONSULTATION : consultation record open
+@enduml

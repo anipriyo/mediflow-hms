@@ -25,12 +25,14 @@ export function tcE2E(meta, fn) {
   });
 }
 
-/** Log in through the real login form. */
+/** Log in through the real login form (always starts from a clean session). */
 export async function login(page, username) {
   await page.goto('/login');
-  await page.evaluate(() => { try { localStorage.clear(); } catch { /* ignore */ } });
+  await page.evaluate(() => { try { localStorage.removeItem('mediflow.token'); } catch { /* ignore */ } }).catch(() => {});
   await page.goto('/login');
-  await page.getByLabel('Username').fill(username);
+  const userField = page.getByLabel('Username');
+  await expect(userField).toBeVisible();
+  await userField.fill(username);
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByTestId('current-user')).toBeVisible();

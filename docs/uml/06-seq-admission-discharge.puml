@@ -1,0 +1,61 @@
+@startuml
+!include _style.iuml
+title Sequence Diagram 3 – Admission, bed allocation and discharge with billing clearance (FR-39 … FR-46)
+autonumber
+actor Receptionist as R
+actor Doctor as D
+actor "Billing Staff" as B
+actor Administrator as A
+participant "AdmissionService" as ADS
+participant "bedStateMachine /\nadmissionRules" as RULES
+participant "BillingService" as BS
+participant "AuditService" as AUD
+database "SQLite" as DB
+
+R -> ADS : POST /admissions {patient, doctor, bed GA-04}
+ADS -> DB : BEGIN; any active admission for patient?
+alt patient already admitted
+  ADS --> R : 409 ALREADY_ADMITTED
+else
+  ADS -> RULES : canTransitionBed(AVAILABLE → OCCUPIED)
+  ADS -> DB : INSERT admission (ADMITTED), UPDATE bed OCCUPIED,\nINSERT bed_stay; COMMIT
+  ADS -> AUD : log(CREATE Admission)
+  ADS --> R : 201 ADM-20261021-001
+end
+
+D -> ADS : POST /admissions/{id}/request-discharge {summary}
+ADS -> DB : close open bed_stay
+ADS -> RULES : bedCharges(stays, now)
+RULES --> ADS : days per stay (min 1 day per admission)
+ADS -> DB : INSERT BED charges; status DISCHARGE_PENDING
+ADS --> D : 200
+
+R -> ADS : POST /admissions/{id}/discharge
+ADS -> RULES : dischargeClearance(unbilled, invoices)
+RULES --> ADS : not cleared (uninvoiced charges)
+ADS --> R : 409 BILLING_NOT_CLEARED
+
+B -> BS : POST /billing/invoices {patient, admission}
+BS -> DB : BEGIN; collect unbilled charges; INSERT invoice;\nlink charges; COMMIT
+BS --> B : INV-20261021-0003 (UNPAID)
+B -> BS : POST /billing/invoices/{id}/payments {amount, UPI, ref}
+BS -> BS : validatePayment (0 < amount ≤ balance)
+BS -> DB : INSERT payment + receipt no; UPDATE invoice PAID
+BS --> B : receipt R-20261021-0005
+
+R -> ADS : POST /admissions/{id}/discharge
+ADS -> RULES : dischargeClearance(...)
+alt cleared
+  ADS -> DB : admission DISCHARGED; bed CLEANING (release)
+  ADS -> AUD : log(STATUS_CHANGE)
+  ADS --> R : 200 DISCHARGED
+else balance still outstanding
+  ADS --> R : 409 BILLING_NOT_CLEARED
+  opt emergency transfer
+    A -> ADS : POST discharge {override_reason}
+    ADS -> RULES : dischargeClearance(override by ADMIN)
+    ADS -> DB : DISCHARGED; bed CLEANING
+    ADS -> AUD : log(DISCHARGE_OVERRIDE, reason, outstanding)
+  end
+end
+@enduml

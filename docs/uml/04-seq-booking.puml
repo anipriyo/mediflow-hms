@@ -1,0 +1,45 @@
+@startuml
+!include _style.iuml
+title Sequence Diagram 1 – Book an appointment (FR-15 … FR-17)
+autonumber
+actor Receptionist as R
+participant "Booking Wizard\n(React)" as UI
+participant "Express Router\n+ auth middleware" as API
+participant "DoctorService" as DS
+participant "AppointmentService" as AS
+participant "appointmentRules" as RULES
+participant "AuditService" as AUD
+database "SQLite" as DB
+
+R -> UI : select patient, doctor, date
+UI -> API : GET /doctors/{id}/slots?date=D
+API -> API : authenticate(JWT), authorize(appointments:read)
+API -> DS : slots(doctorId, D)
+DS -> DB : SELECT active appointments (doctor, D)
+DS -> RULES : freeSlots(doctor, D, bookings, now)
+RULES --> DS : slots [available | BOOKED | PAST]
+DS --> UI : 200 slot list
+R -> UI : choose slot 11:00, enter reason, confirm
+UI -> API : POST /appointments {patient, doctor, D, 11:00}
+API -> API : authorize(appointments:write)
+API -> AS : book(data, actor)
+AS -> DB : BEGIN TRANSACTION
+AS -> RULES : validateSlot(doctor, D, 11:00, now)
+alt slot invalid (past / outside hours / misaligned)
+  RULES --> AS : problems[]
+  AS --> UI : 400 Validation error
+else slot valid
+  AS -> RULES : findConflict(doctor bookings)
+  AS -> RULES : findConflict(patient bookings)
+  alt doctor or patient already booked
+    AS --> UI : 409 DOCTOR_SLOT_TAKEN / PATIENT_DOUBLE_BOOKED
+  else free
+    AS -> DB : INSERT appointment (SCHEDULED)
+    AS -> DB : COMMIT
+    AS -> AUD : log(CREATE Appointment)
+    AUD -> DB : INSERT audit_logs
+    AS --> UI : 201 appointment
+    UI --> R : "Appointment booked" toast
+  end
+end
+@enduml

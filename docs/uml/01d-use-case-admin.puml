@@ -1,0 +1,39 @@
+@startuml
+!include _style.iuml
+title Use Case Diagram 4 – Administration and access control
+left to right direction
+skinparam packageStyle rectangle
+actor "Staff User" as STAFF
+actor Receptionist as REC
+actor Doctor as DOC
+actor "Lab Technician" as LAB
+actor Pharmacist as PHA
+actor "Billing Staff" as BIL
+actor Administrator as ADM
+REC -|> STAFF
+DOC -|> STAFF
+LAB -|> STAFF
+PHA -|> STAFF
+BIL -|> STAFF
+ADM -|> STAFF
+rectangle "MediFlow HMS – Administration" {
+  usecase "Log in" as LOGIN
+  usecase "Lock account after\n5 failed attempts" as LOCK
+  usecase "Log out" as LOGOUT
+  usecase "View role dashboard" as DASH
+  usecase "Manage users & roles" as USERS
+  usecase "Reset password /\n(de)activate user" as RESET
+  usecase "Manage doctors &\ndepartments" as DOCS
+  usecase "View management reports" as RPT
+  usecase "View audit trail" as AUD
+}
+STAFF --> LOGIN
+STAFF --> LOGOUT
+STAFF --> DASH
+LOCK ..> LOGIN : <<extend>>
+ADM --> USERS
+ADM --> DOCS
+ADM --> RPT
+ADM --> AUD
+RESET ..> USERS : <<extend>>
+@enduml

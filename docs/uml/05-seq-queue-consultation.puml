@@ -1,0 +1,62 @@
+@startuml
+!include _style.iuml
+title Sequence Diagram 2 – Check-in, smart queue and consultation (FR-21 … FR-29)
+autonumber
+actor Receptionist as R
+actor Doctor as D
+participant "React UI" as UI
+participant "QueueService" as QS
+participant "queueRules" as QR
+participant "ConsultationService" as CS
+participant "LabService" as LS
+participant "ChargeService" as CH
+participant "AuditService" as AUD
+database "SQLite" as DB
+
+R -> UI : Check in today's appointment
+UI -> QS : POST /appointments/{id}/check-in
+QS -> DB : SELECT tokens (doctor, today)
+QS -> QR : nextToken(tokens)
+QS -> DB : UPDATE appointment SET CHECKED_IN, token
+QS -> AUD : log(CHECK_IN)
+QS --> UI : token #07
+
+D -> UI : open Queue board
+UI -> QS : GET /queue/{doctorId}
+QS -> QR : estimateWaits(waiting, avg, inProgress, now)
+QR --> QS : ordered list (URGENT first) + ETA
+QS --> UI : board
+
+D -> UI : "Call next patient"
+UI -> QS : POST /queue/{doctorId}/call-next
+QS -> DB : BEGIN; check no IN_CONSULTATION
+alt consultation already in progress
+  QS --> UI : 409 CONSULTATION_IN_PROGRESS
+else
+  QS -> QR : sortQueue(waiting)
+  QS -> DB : UPDATE appointment IN_CONSULTATION;\nINSERT consultation (IN_PROGRESS); COMMIT
+  QS --> UI : consultation id
+end
+
+D -> UI : enter vitals, symptoms, diagnosis
+UI -> CS : PUT /consultations/{id}
+CS -> DB : UPDATE consultation
+D -> UI : add medicines
+UI -> CS : PUT /consultations/{id}/prescription
+CS -> DB : INSERT prescription (PENDING) + items
+D -> UI : order FBS (STAT)
+UI -> LS : POST /lab/orders
+LS -> DB : INSERT lab_order (ORDERED)
+LS -> CH : add(LAB charge)
+D -> UI : "Complete consultation"
+UI -> CS : POST /consultations/{id}/complete
+alt diagnosis missing
+  CS --> UI : 400 Diagnosis is required
+else
+  CS -> DB : BEGIN; consultation COMPLETED;\nappointment COMPLETED
+  CS -> CH : add(CONSULTATION fee charge)
+  CS -> DB : COMMIT
+  CS -> AUD : log(STATUS_CHANGE)
+  CS --> UI : completed
+end
+@enduml

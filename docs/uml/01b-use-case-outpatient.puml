@@ -1,0 +1,56 @@
+@startuml
+!include _style.iuml
+title Use Case Diagram 2 – Outpatient care (front desk, clinical, lab, pharmacy)
+left to right direction
+skinparam packageStyle rectangle
+actor Receptionist as REC
+actor Doctor as DOC
+actor "Lab Technician" as LAB
+actor Pharmacist as PHA
+rectangle "MediFlow HMS – Outpatient" {
+  usecase "Register patient" as REG
+  usecase "Detect duplicate\npatient" as DUP
+  usecase "Search / update\npatient" as SRCH
+  usecase "Book appointment" as BOOK
+  usecase "Check slot\navailability" as SLOT
+  usecase "Reschedule /\ncancel appointment" as RESC
+  usecase "Check in patient" as CHK
+  usecase "Issue queue token\n& wait estimate" as TOK
+  usecase "Mark patient urgent" as URG
+  usecase "Call next patient" as NEXT
+  usecase "Record consultation\n(vitals, diagnosis, notes)" as CONS
+  usecase "Write prescription" as RX
+  usecase "Order lab tests" as ORD
+  usecase "View patient history" as HIST
+  usecase "Collect sample" as COLL
+  usecase "Enter lab result" as RES
+  usecase "Flag abnormal result" as ABN
+  usecase "Dispense prescription" as DISP
+  usecase "Manage medicine stock" as STOCK
+  usecase "View stock alerts" as ALRT
+}
+REC --> REG
+REC --> SRCH
+REC --> BOOK
+REC --> RESC
+REC --> CHK
+REC --> URG
+REG ..> DUP : <<include>>
+BOOK ..> SLOT : <<include>>
+RESC ..> SLOT : <<include>>
+CHK ..> TOK : <<include>>
+URG ..> CHK : <<extend>>
+DOC --> NEXT
+DOC --> CONS
+DOC --> HIST
+DOC --> URG
+NEXT ..> CONS : <<include>>
+RX ..> CONS : <<extend>>
+ORD ..> CONS : <<extend>>
+LAB --> COLL
+LAB --> RES
+RES ..> ABN : <<include>>
+PHA --> DISP
+PHA --> STOCK
+PHA --> ALRT
+@enduml

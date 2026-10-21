@@ -1,0 +1,35 @@
+@startuml
+!include _style.iuml
+title Activity Diagram – Outpatient (OPD) patient journey
+|Receptionist|
+start
+:Search patient;
+if (Registered?) then (no)
+  :Register patient\n(duplicate check);
+endif
+:Book appointment\n(free slot);
+:Check in on visit day\n→ queue token + ETA;
+|Doctor|
+:Call next patient;
+:Record vitals, symptoms,\ndiagnosis, notes;
+fork
+  :Write prescription;
+fork again
+  :Order lab tests;
+end fork
+:Complete consultation\n(fee charged);
+|Lab Technician|
+:Collect sample;
+:Enter result\n(auto abnormal flag);
+|Pharmacist|
+if (All items in stock\nand not expired?) then (yes)
+  :Dispense\n(stock reduced,\nmedicine charges);
+else (no)
+  :Hold prescription\n(restock / substitute);
+endif
+|Billing Staff|
+:Generate invoice\nfrom unbilled charges;
+:Record payment(s)\n(cash / card / UPI);
+:Print receipt;
+stop
+@enduml

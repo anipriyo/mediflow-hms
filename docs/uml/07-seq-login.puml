@@ -1,0 +1,38 @@
+@startuml
+!include _style.iuml
+title Sequence Diagram 4 – Login with account lock-out and role-based access (FR-01 … FR-04)
+autonumber
+actor "Staff user" as U
+participant "Login page" as UI
+participant "AuthService" as AS
+participant "authRules" as AR
+participant "AuthMiddleware" as MW
+participant "permissions" as P
+database "SQLite" as DB
+
+U -> UI : username + password
+UI -> AS : POST /auth/login
+AS -> DB : SELECT user
+alt account deactivated
+  AS --> UI : 401 deactivated
+else account locked (lockedUntil > now)
+  AS --> UI : 423 locked, try again in N min
+else wrong password
+  AS -> AR : afterFailedAttempt(user, now)
+  AS -> DB : UPDATE failed_attempts / locked_until
+  AS -> DB : INSERT audit (LOGIN_FAILED)
+  AS --> UI : 401 (or 423 on 5th failure)
+else valid
+  AS -> DB : reset counter; INSERT session (jti, expires +8h)
+  AS --> UI : JWT + user + permissions
+end
+U -> UI : open "Billing" page
+UI -> MW : GET /billing/invoices (Bearer JWT)
+MW -> AS : verify(token) – signature, expiry, session not revoked
+MW -> P : can(role, "billing:read")
+alt not permitted
+  MW --> UI : 403 Forbidden
+else permitted
+  MW --> UI : 200 data
+end
+@enduml

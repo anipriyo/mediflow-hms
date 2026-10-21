@@ -1,0 +1,18 @@
+@startuml
+!include _style.iuml
+title State Diagram – Bed
+[*] --> AVAILABLE
+AVAILABLE --> RESERVED : reserve()
+RESERVED --> AVAILABLE : release()
+AVAILABLE --> OCCUPIED : admit(patient)
+RESERVED --> OCCUPIED : admit(patient)
+OCCUPIED --> CLEANING : discharge() / transfer()
+CLEANING --> AVAILABLE : markCleaned()
+CLEANING --> MAINTENANCE : reportFault()
+AVAILABLE --> MAINTENANCE : takeOutOfService()
+MAINTENANCE --> AVAILABLE : backInService()
+note right of OCCUPIED
+  at most one active admission per bed
+  (unique index on current_admission_id)
+end note
+@enduml

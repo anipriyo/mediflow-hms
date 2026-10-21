@@ -1,0 +1,184 @@
+@startuml
+!include _style.iuml
+title MediFlow HMS – Design Class Diagram (Service Layer)
+hide empty members
+skinparam linetype ortho
+left to right direction
+
+package "Presentation (React SPA)" {
+  class ApiClient <<lib/api.js>> {
+    + get(path, query)
+    + post(path, body)
+    + put(path, body)
+    + patch(path, body)
+  }
+  class AuthContext <<lib/auth.jsx>> {
+    + user
+    + login(u, p)
+    + logout()
+    + can(permission)
+  }
+}
+
+package "REST API (Express)" {
+  class Router <<routes/index.js>> {
+    /api/auth, /patients, /appointments,
+    /queue, /consultations, /lab, /pharmacy,
+    /beds, /admissions, /billing, /reports, /audit
+  }
+  class AuthMiddleware <<middleware/auth.js>> {
+    + authenticate(req)
+    + authorize(...permissions)
+  }
+}
+
+package "Service layer" {
+  class AuthService {
+    + login(username, password)
+    + verify(token)
+    + logout(actor)
+  }
+  class PatientService {
+    + register(data, actor)
+    + findDuplicates(data)
+    + search(q)
+    + update(id, data, actor)
+    + history(id, actor)
+  }
+  class AppointmentService {
+    + book(data, actor)
+    + reschedule(id, data, actor)
+    + cancel(id, reason, actor)
+    + list(filters)
+  }
+  class QueueService {
+    + checkIn(appointmentId, actor)
+    + board(doctorId, date)
+    + setPriority(id, reason, actor)
+    + callNext(doctorId, actor)
+  }
+  class ConsultationService {
+    + save(id, data, actor)
+    + savePrescription(id, items, actor)
+    + complete(id, actor)
+  }
+  class LabService {
+    + order(data, actor)
+    + collect(id, actor)
+    + recordResult(id, data, actor)
+    + cancel(id, reason, actor)
+  }
+  class PharmacyService {
+    + restock(id, data, actor)
+    + alerts()
+    + dispense(prescriptionId, actor)
+  }
+  class BedService {
+    + board()
+    + changeStatus(id, status, actor)
+  }
+  class AdmissionService {
+    + admit(data, actor)
+    + transfer(id, bedId, actor)
+    + requestDischarge(id, summary, actor)
+    + discharge(id, override, actor)
+  }
+  class BillingService {
+    + generate(patientId, admissionId, actor)
+    + applyDiscount(id, pct, actor)
+    + recordPayment(id, payment, actor)
+    + receipt(paymentId)
+  }
+  class ChargeService {
+    + add(charge)
+    + removeUnbilled(type, id)
+  }
+  class ReportService {
+    + dashboard(actor)
+    + summary(from, to)
+  }
+  class AuditService {
+    + log(actor, action, entity, id, summary)
+    + search(filters)
+  }
+}
+
+package "Domain rules (pure functions)" {
+  class appointmentRules <<utility>> {
+    + generateSlots()
+    + validateSlot()
+    + findConflict()
+  }
+  class queueRules <<utility>> {
+    + sortQueue()
+    + estimateWaits()
+    + nextToken()
+  }
+  class bedStateMachine <<utility>> {
+    + canTransitionBed()
+  }
+  class admissionRules <<utility>> {
+    + bedCharges()
+    + dischargeClearance()
+  }
+  class billingRules <<utility>> {
+    + computeTotals()
+    + validatePayment()
+    + validateDiscount()
+  }
+  class labRules <<utility>> {
+    + isAbnormal()
+  }
+  class inventoryRules <<utility>> {
+    + checkDispensable()
+    + stockAlerts()
+  }
+  class permissions <<utility>> {
+    + can(role, permission)
+  }
+}
+
+package "Data access" {
+  class Database <<db/connection.js>> {
+    + db() : SQLite
+    + tx(fn)
+  }
+}
+
+ApiClient ..> Router : HTTPS/JSON
+AuthContext ..> ApiClient
+Router ..> AuthMiddleware
+AuthMiddleware ..> AuthService
+AuthMiddleware ..> permissions
+Router ..> PatientService
+Router ..> AppointmentService
+Router ..> QueueService
+Router ..> ConsultationService
+Router ..> LabService
+Router ..> PharmacyService
+Router ..> BedService
+Router ..> AdmissionService
+Router ..> BillingService
+Router ..> ReportService
+AppointmentService ..> appointmentRules
+QueueService ..> queueRules
+QueueService ..> AppointmentService
+ConsultationService ..> ChargeService
+LabService ..> ChargeService
+LabService ..> labRules
+PharmacyService ..> inventoryRules
+PharmacyService ..> ChargeService
+AdmissionService ..> bedStateMachine
+AdmissionService ..> admissionRules
+AdmissionService ..> ChargeService
+AdmissionService ..> BedService
+BedService ..> bedStateMachine
+BillingService ..> billingRules
+PatientService ..> AuditService
+AppointmentService ..> AuditService
+BillingService ..> AuditService
+AdmissionService ..> AuditService
+AuditService ..> Database
+ChargeService ..> Database
+BillingService ..> Database
+@enduml

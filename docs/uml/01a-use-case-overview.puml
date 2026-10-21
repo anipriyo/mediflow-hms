@@ -1,0 +1,36 @@
+@startuml
+!include _style.iuml
+title Use Case Diagram 1 – System overview (context level)
+left to right direction
+skinparam packageStyle rectangle
+actor Receptionist as REC
+actor Doctor as DOC
+actor "Lab Technician" as LAB
+actor Pharmacist as PHA
+actor "Billing Staff" as BIL
+actor Administrator as ADM
+rectangle "MediFlow HMS" {
+  usecase "Manage patients" as U1
+  usecase "Manage appointments\n& smart queue" as U2
+  usecase "Conduct consultation\n& medical records" as U3
+  usecase "Process lab tests" as U4
+  usecase "Manage pharmacy\n& dispense" as U5
+  usecase "Admit, transfer\n& discharge (IPD)" as U6
+  usecase "Billing & payments" as U7
+  usecase "Reports & dashboard" as U8
+  usecase "Users, roles\n& audit trail" as U9
+}
+REC --> U1
+REC --> U2
+REC --> U6
+DOC --> U2
+DOC --> U3
+DOC --> U6
+LAB --> U4
+PHA --> U5
+BIL --> U7
+BIL --> U6
+ADM --> U8
+ADM --> U9
+ADM --> U6
+@enduml

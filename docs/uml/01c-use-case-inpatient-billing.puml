@@ -1,0 +1,42 @@
+@startuml
+!include _style.iuml
+title Use Case Diagram 3 – Inpatient care and billing
+left to right direction
+skinparam packageStyle rectangle
+actor Receptionist as REC
+actor Doctor as DOC
+actor "Billing Staff" as BIL
+actor Administrator as ADM
+rectangle "MediFlow HMS – IPD & Billing" {
+  usecase "View bed board" as BEDS
+  usecase "Admit patient /\nallocate bed" as ADMIT
+  usecase "Transfer bed" as TRANS
+  usecase "Update bed status\n(cleaning, maintenance)" as BSTAT
+  usecase "Request discharge\n(summary)" as REQD
+  usecase "Calculate bed charges" as BCH
+  usecase "Discharge patient" as DISCH
+  usecase "Verify billing clearance" as CLEAR
+  usecase "Override clearance\n(with reason)" as OVR
+  usecase "Generate invoice" as INV
+  usecase "Apply discount" as DISC
+  usecase "Record payment" as PAY
+  usecase "Print receipt / invoice" as RCPT
+  usecase "Cancel invoice" as CINV
+}
+REC --> BEDS
+REC --> ADMIT
+REC --> TRANS
+REC --> BSTAT
+REC --> DISCH
+DOC --> REQD
+DOC --> BEDS
+REQD ..> BCH : <<include>>
+DISCH ..> CLEAR : <<include>>
+OVR ..> DISCH : <<extend>>
+ADM --> OVR
+BIL --> INV
+BIL --> DISC
+BIL --> PAY
+BIL --> CINV
+PAY ..> RCPT : <<include>>
+@enduml

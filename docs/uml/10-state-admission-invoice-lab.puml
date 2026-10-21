@@ -1,0 +1,33 @@
+@startuml
+!include _style.iuml
+title State Diagrams – Admission, Invoice and Lab Order
+
+state "Admission" as ADM {
+  [*] --> ADMITTED : admit()
+  ADMITTED --> ADMITTED : transfer(bed)
+  ADMITTED --> DISCHARGE_PENDING : requestDischarge(summary)\n/ add bed charges
+  DISCHARGE_PENDING --> DISCHARGED : discharge() [bills cleared]\nor [ADMIN override + reason]
+  DISCHARGED --> [*]
+}
+
+state "Invoice" as INV {
+  [*] --> UNPAID : generate()
+  UNPAID --> UNPAID : applyDiscount(0–50%)
+  UNPAID --> PARTIALLY_PAID : pay(amount < balance)
+  UNPAID --> PAID : pay(amount = balance)
+  PARTIALLY_PAID --> PARTIALLY_PAID : pay(amount < balance)
+  PARTIALLY_PAID --> PAID : pay(amount = balance)
+  UNPAID --> CANCELLED : cancel(reason) [no payments]\n/ release charges
+  PAID --> [*]
+  CANCELLED --> [*]
+}
+
+state "Lab Order" as LO {
+  [*] --> ORDERED : order() / add charge
+  ORDERED --> SAMPLE_COLLECTED : collectSample()
+  SAMPLE_COLLECTED --> COMPLETED : recordResult()\n/ flag abnormal
+  ORDERED --> CANCELLED : cancel() / remove charge
+  COMPLETED --> [*]
+  CANCELLED --> [*]
+}
+@enduml

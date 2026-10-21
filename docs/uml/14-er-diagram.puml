@@ -1,0 +1,168 @@
+@startuml
+!include _style.iuml
+title Logical Data Model (optional database design)
+hide circle
+skinparam linetype ortho
+entity users {
+  *id PK
+  --
+  username UK
+  password_hash
+  role
+  active
+  failed_attempts
+  locked_until
+}
+entity sessions {
+  *jti PK
+  --
+  user_id FK
+  expires_at
+  revoked_at
+}
+entity departments {
+  *id PK
+  --
+  name UK
+}
+entity doctors {
+  *id PK
+  --
+  user_id FK UK
+  department_id FK
+  consultation_fee
+  slot_minutes
+  work_start / work_end / work_days
+}
+entity patients {
+  *id PK
+  --
+  patient_code UK
+  name, gender, dob
+  phone, blood_group
+}
+entity appointments {
+  *id PK
+  --
+  patient_id FK
+  doctor_id FK
+  date, start_time, end_time
+  status, token_no, priority
+}
+entity consultations {
+  *id PK
+  --
+  appointment_id FK UK
+  vitals, diagnosis, notes
+  status
+}
+entity prescriptions {
+  *id PK
+  --
+  consultation_id FK
+  status
+}
+entity prescription_items {
+  *id PK
+  --
+  prescription_id FK
+  medicine_id FK
+  dosage, quantity
+}
+entity medicines {
+  *id PK
+  --
+  name, unit_price
+  stock_qty, reorder_level
+  expiry_date
+}
+entity lab_tests {
+  *id PK
+  --
+  code UK, price
+  ref_low, ref_high
+}
+entity lab_orders {
+  *id PK
+  --
+  patient_id FK
+  lab_test_id FK
+  consultation_id FK
+  admission_id FK
+  status, result, is_abnormal
+}
+entity wards {
+  *id PK
+  --
+  name, type, daily_rate
+}
+entity beds {
+  *id PK
+  --
+  ward_id FK
+  bed_no, status
+  current_admission_id FK UK
+}
+entity admissions {
+  *id PK
+  --
+  admission_no UK
+  patient_id FK
+  bed_id FK
+  status
+}
+entity bed_stays {
+  *id PK
+  --
+  admission_id FK
+  bed_id FK
+  start_at, end_at, daily_rate
+}
+entity charges {
+  *id PK
+  --
+  patient_id FK
+  source_type, amount
+  invoice_id FK
+}
+entity invoices {
+  *id PK
+  --
+  invoice_no UK
+  patient_id FK
+  total, paid_amount, status
+}
+entity payments {
+  *id PK
+  --
+  invoice_id FK
+  receipt_no UK
+  amount, method
+}
+entity audit_logs {
+  *id PK
+  --
+  ts, user_id
+  action, entity, summary
+  (append-only)
+}
+users ||--o{ sessions
+users ||--o| doctors
+departments ||--|{ doctors
+patients ||--o{ appointments
+doctors ||--o{ appointments
+appointments ||--o| consultations
+consultations ||--o| prescriptions
+prescriptions ||--|{ prescription_items
+medicines ||--o{ prescription_items
+lab_tests ||--o{ lab_orders
+patients ||--o{ lab_orders
+wards ||--|{ beds
+patients ||--o{ admissions
+beds ||--o{ admissions
+admissions ||--|{ bed_stays
+patients ||--o{ charges
+invoices |o--|{ charges
+invoices ||--o{ payments
+users |o--o{ audit_logs
+@enduml
