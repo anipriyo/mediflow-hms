@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import {
   Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, ShadingType, AlignmentType, ImageRun,
-  BorderStyle, PageBreak, VerticalAlign, TableLayoutType,
+  BorderStyle, PageBreak, VerticalAlign, TableLayoutType, ExternalHyperlink,
 } from 'docx';
 
 export const C = {
@@ -20,18 +20,127 @@ let figNo = 0;
 let tabNo = 0;
 export const counters = { figures: [], tables: [] };
 
-/** Parse a tiny markup: **bold**, `code`, _italic_ */
+// Words that must keep their case after a sentence break (commands, units, abbreviations).
+const KEEP_CASE = new Set(['npm', 'npx', 'mg/dL', 'e.g', 'i.e']);
+
+/** Capitalise the first letter of `rest` unless it starts with an identifier, code or a lowercase-only name. */
+function capFirst(rest) {
+  const m = rest.match(/^((?:\*\*|_)?)([^\s,;:)]*)/);
+  const word = m[2].replace(/\.$/, '');
+  if (!word || !/^[a-z]/.test(word) || /[\d_@/`=]/.test(word) || KEEP_CASE.has(word) || /^[a-z]+\.[a-z]/.test(word)) return rest;
+  return m[1] + word[0].toUpperCase() + rest.slice(m[1].length + 1);
+}
+
+/** True if position i in s sits inside an unclosed round bracket of the same sentence. */
+function insideBrackets(s, i) {
+  const before = s.slice(0, i);
+  return (before.match(/\(/g) || []).length > (before.match(/\)/g) || []).length;
+}
+
+/**
+ * A colon after a longer clause that introduces a lowercase list ("manage doctor profiles: department, fee, ...")
+ * becomes brackets around the list, or is dropped after "are/is/include". Lists that already contain
+ * brackets or separators fall back to a comma.
+ */
+function listColons(s) {
+  let out = '';
+  let i = 0;
+  for (;;) {
+    const j = s.indexOf(':', i);
+    if (j < 0) return out + s.slice(i);
+    const m = s.slice(j + 1).match(/^(\*\*|_)?(\s+)(?=[a-z])/);
+    const sentence = s.slice(0, j).split(/(?<!\be\.g|\bi\.e|\bincl)[.!?]\s/).pop();
+    if (!m || insideBrackets(s, j) || sentence.trim().split(/\s+/).length <= 6) {
+      out += s.slice(i, j + 1);
+      i = j + 1;
+      continue;
+    }
+    const marker = m[1] || '';
+    const start = j + 1 + m[0].length;
+    const endRel = s.slice(start).search(/(?<!\be\.g|\bi\.e|\bincl)[.!?;](\s|$)/);
+    const end = endRel < 0 ? s.length : start + endRel;
+    const body = s.slice(start, end);
+    out += s.slice(i, j);
+    if (/\b(are|is|was|were|include|includes)$/.test(sentence.trimEnd())) out += `${marker} ${body}`;
+    else if (!/[()[\]:;]/.test(body)) out += `${marker} (${body})`;
+    else out += `, namely${marker} ${body}`;
+    i = end;
+  }
+}
+
+/**
+ * House style for the report text: no em dash, en dash, semicolon or colon.
+ * Times become 09.30, ranges become "A to B", "Label: text" becomes "Label. Text",
+ * semicolons become sentence breaks (commas inside brackets), URLs lose their scheme,
+ * route parameters become {id} and permission names become area.action.
+ */
+export function clean(input) {
+  let s = String(input ?? '');
+  if (/^\s*[—–-]\s*$/.test(s)) return 'n/a';
+  const links = [];
+  s = s.replace(/\]\(([^)\s]+)\)/g, (_m, url) => `](\u0000${links.push(url) - 1}\u0001)`);
+  s = s
+    .replace(/npm run test:coverage/g, 'npx vitest run --coverage')
+    .replace(/npm run test:e2e/g, 'npx playwright test')
+    .replace(/npm run test:(unit|integration)/g, 'npx vitest run tests/$1')
+    .replace(/npm run test:all/g, 'npx vitest run and npx playwright test')
+    .replace(/https?:\/\//g, '')
+    .replace(/\blocalhost:(\d+)/g, 'localhost port $1')
+    .replace(/\b(\d{3,5}):((?:19|20)\d\d)\b/g, '$1 ($2)')
+    .replace(/"(\w+)":\s*/g, '"$1" = ')
+    .replace(/(^|[;,]\s*)([a-z][\w.]*): (\d)/g, '$1$2 $3')
+    .replace(/(?<!\d)(\d{1,2}):(\d{2})(?::(\d{2}))?(?!\d)/g, (_m, h, mm, ss) => `${h}.${mm}${ss ? `.${ss}` : ''}`)
+    .replace(/\/:([A-Za-z]\w*)/g, '/{$1}')
+    .replace(/\b([a-z]+):([a-z_]+)\b/g, '$1.$2')
+    .replace(/^((?:PART|Part|APPENDIX|Appendix) [A-Z])\s*[\u2013\u2014]\s*/, '$1. ')
+    // Ranges and spans
+    .replace(/(\S)\s*[–—]\s*(?=[\w₹(])/g, (m, a, off, str) => {
+      const next = str.slice(off + m.length, off + m.length + 12);
+      const isRange = /[\d)]$/.test(a) && /^[\dA-Z(₹]/.test(next) && !/\s[–—]\s[A-Z][a-z]/.test(m + next);
+      return isRange || !/\s/.test(m) ? `${a} to ` : `${a}, `;
+    })
+    .replace(/^\s*[–—]\s*/g, '')
+    .replace(/\s*[–—]\s*/g, ', ');
+  s = listColons(s);
+  // Colons and semicolons → sentence breaks ("Label: text" → "Label. Text"), commas inside brackets
+  // or where a long clause introduces a lowercase list.
+  const CODE_LIKE = /^[/{"'\d]|[=?&_@{}"]/;
+  for (let pass = 0; pass < 500 && /[:;]/.test(s); pass++) {
+    s = s.replace(/([:;])(\*\*|_|`)?(\s*)([^\s:;]*)/, (m, ch, marker = '', ws, word, off, str) => {
+      if (!ws && !word) return /[.!?]$/.test(str.slice(0, off)) ? marker : `.${marker}`;
+      const shortItem = ch === ';' && /^[a-z]/.test(word) && str.slice(0, off).split(/[.;,!?]\s/).pop().trim().split(/\s+/).length <= 4;
+      const codeList = ch === ';' && (CODE_LIKE.test(word) || shortItem);
+      if (insideBrackets(str, off) || codeList) return `,${marker}${ws || ' '}${word}`;
+      return `.${marker}${ws || ' '}${capFirst(word)}`;
+    });
+  }
+  s = s.replace(/,\s*,/g, ',').replace(/\.\s*\./g, '.').replace(/\s+,/g, ',');
+  return s.replace(/\u0000(\d+)\u0001/g, (_m, k) => links[Number(k)]);
+}
+
+/** Captions "Kind – subject" become "Kind (subject)" unless the subject already has brackets. */
+export function cleanCaption(text) {
+  const m = String(text ?? '').match(/^(.*?)\s+[\u2013\u2014]\s+(.*)$/);
+  return clean(m && !/[()]/.test(m[2]) ? `${m[1]} (${m[2]})` : text);
+}
+
+/** Parse a tiny markup: **bold**, `code`, _italic_, [text](url). Text is passed through clean() first. */
 export function runs(text, base = {}) {
   if (Array.isArray(text)) return text;
+  text = clean(text);
   const out = [];
-  const re = /(\*\*[^*]+\*\*|`[^`]+`|_[^_]+_)/g;
+  // _italic_ only at word edges, so identifiers like SAMPLE_COLLECTED keep their underscores
+  const re = /(\[[^\]]+\]\([^)\s]+\)|\*\*[^*]+\*\*|`[^`]+`|(?<!\w)_[^_]+_(?!\w))/g;
   let last = 0;
   let m;
   const s = String(text ?? '');
   while ((m = re.exec(s))) {
     if (m.index > last) out.push(new TextRun({ text: s.slice(last, m.index), font: FONT, ...base }));
     const tok = m[0];
-    if (tok.startsWith('**')) out.push(new TextRun({ text: tok.slice(2, -2), bold: true, font: FONT, ...base }));
+    if (tok.startsWith('[')) {
+      const [, label, link] = tok.match(/^\[([^\]]+)\]\(([^)\s]+)\)$/);
+      out.push(new ExternalHyperlink({ link, children: [new TextRun({ text: label, font: FONT, ...base, color: C.brand, underline: {} })] }));
+    } else if (tok.startsWith('**')) out.push(new TextRun({ text: tok.slice(2, -2), bold: true, font: FONT, ...base }));
     else if (tok.startsWith('`')) out.push(new TextRun({ text: tok.slice(1, -1), font: 'Consolas', size: (base.size || 21) - 2, color: base.color || '334155', bold: base.bold }));
     else out.push(new TextRun({ text: tok.slice(1, -1), italics: true, font: FONT, ...base }));
     last = m.index + tok.length;
@@ -40,9 +149,9 @@ export function runs(text, base = {}) {
   return out;
 }
 
-export const H1 = (t, opts = {}) => new Paragraph({ heading: HeadingLevel.HEADING_1, pageBreakBefore: opts.pageBreak ?? false, children: [new TextRun({ text: t, font: FONT })] });
-export const H2 = (t) => new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: t, font: FONT })] });
-export const H3 = (t) => new Paragraph({ heading: HeadingLevel.HEADING_3, children: [new TextRun({ text: t, font: FONT })] });
+export const H1 = (t, opts = {}) => new Paragraph({ heading: HeadingLevel.HEADING_1, pageBreakBefore: opts.pageBreak ?? false, children: [new TextRun({ text: clean(t), font: FONT })] });
+export const H2 = (t) => new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: clean(t), font: FONT })] });
+export const H3 = (t) => new Paragraph({ heading: HeadingLevel.HEADING_3, children: [new TextRun({ text: clean(t), font: FONT })] });
 
 export const P = (t, opts = {}) => new Paragraph({
   children: runs(t, opts.run || {}),
@@ -131,8 +240,8 @@ export function DataTable(columns, rows, opts = {}) {
 
 export function TableCaption(text) {
   tabNo += 1;
-  counters.tables.push(`Table ${tabNo}: ${text}`);
-  const para = new Paragraph({ children: [new TextRun({ text: `Table ${tabNo}: `, bold: true, font: FONT, size: 18, color: C.brand }), new TextRun({ text, font: FONT, size: 18, color: C.muted })], spacing: { before: 200, after: 80 }, keepNext: true });
+  counters.tables.push(`Table ${tabNo}. ${cleanCaption(text)}`);
+  const para = new Paragraph({ children: [new TextRun({ text: `Table ${tabNo}. `, bold: true, font: FONT, size: 18, color: C.brand }), new TextRun({ text: cleanCaption(text), font: FONT, size: 18, color: C.muted })], spacing: { before: 200, after: 80 }, keepNext: true });
   para.__caption = true;
   return para;
 }
@@ -170,14 +279,14 @@ function pngSize(file) {
 /** Figure with caption; maxW/maxH in pixels at 96 dpi (602 px ≈ 15.9 cm). */
 export function Figure(file, caption, { maxW = 640, maxH = 860 } = {}) {
   figNo += 1;
-  counters.figures.push(`Figure ${figNo}: ${caption}`);
+  counters.figures.push(`Figure ${figNo}. ${cleanCaption(caption)}`);
   const { w, h } = pngSize(file);
   const scale = Math.min(maxW / w, maxH / h, 1);
   const width = Math.round(w * scale);
   const height = Math.round(h * scale);
   return [
     new Paragraph({ alignment: AlignmentType.CENTER, keepNext: true, spacing: { before: 120, after: 60, line: 240, lineRule: 'auto' }, children: [new ImageRun({ type: 'png', data: fs.readFileSync(file), transformation: { width, height } })] }),
-    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 200 }, children: [new TextRun({ text: `Figure ${figNo}: `, bold: true, font: FONT, size: 18, color: C.brand }), new TextRun({ text: caption, font: FONT, size: 18, color: C.muted })] }),
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 200 }, children: [new TextRun({ text: `Figure ${figNo}. `, bold: true, font: FONT, size: 18, color: C.brand }), new TextRun({ text: cleanCaption(caption), font: FONT, size: 18, color: C.muted })] }),
   ];
 }
 

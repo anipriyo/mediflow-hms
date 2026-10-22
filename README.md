@@ -2,6 +2,8 @@
 
 Software Engineering **Assignment 1 – Hospital Management System** · **Group 11**
 
+**Live demo:** https://mediflow-hms-6vw1.onrender.com (no installation needed; the first visit after 15 idle minutes takes about a minute to wake up)
+
 | Name | Registration No. |
 |---|---|
 | Akash Chakraborty | CSE/23011/1059 |
@@ -18,7 +20,7 @@ MediFlow is a web-based HMS that manages **patients, doctors, appointments, pres
 - Automatic charges → invoices → part payments → printable receipts
 - Role dashboards and management reports
 
-The full report (SRS, SDD with UML, Test Plan and Test Report) is in `docs/report/build/` (`npm run report` regenerates it).
+The full report (SRS, SDD with UML, Test Plan and Test Report) is in `deliverables/` (`npm run report` regenerates it into `docs/report/build/`).
 
 ## How to run
 
@@ -124,7 +126,7 @@ npm run dev
 | `npm test` | Unit + integration tests (Vitest + Supertest) |
 | `npm run test:coverage` | Same, with code coverage |
 | `npx playwright install chromium` then `npm run test:e2e` | System + acceptance tests in a real browser |
-| `npm run report` | Regenerate the report (DOCX + PDF) – needs LibreOffice for the PDF/TOC step |
+| `npm run report` | Regenerate the report (DOCX + PDF) and check its punctuation. Needs LibreOffice for the PDF and table of contents (`brew install --cask libreoffice` on macOS) |
 
 Tip: the demo data is generated relative to the moment the database is created. Run `npm run seed` on the morning of a demo so that today's queues and appointments look realistic.
 
@@ -148,7 +150,7 @@ docs/report/       report generator → build/MediFlow_HMS_Group11_Report.docx /
 
 ## Online deployment (Render)
 
-The app is deployed as one free Render web service defined in [render.yaml](render.yaml). Render builds the React app, serves it from Express, and runs on Render's servers, so the link works even when your own computer is off.
+Live at **https://mediflow-hms-6vw1.onrender.com**. The app is deployed as one free Render web service defined in [render.yaml](render.yaml). Render builds the React app, serves it from Express, and runs on Render's servers, so the link works even when your own computer is off.
 
 - **First deploy:** open https://render.com/deploy?repo=https://github.com/anipriyo/mediflow-hms, sign in with GitHub, give Render access to the `mediflow-hms` repository, and click **Deploy Blueprint**. The first build takes about 5 minutes.
 - **Updates:** every `git push` to `main` redeploys automatically.

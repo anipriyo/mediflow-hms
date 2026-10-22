@@ -1,21 +1,25 @@
 # MediFlow build – progress log
 
 Project: Hospital Management System (Assignment 1), Group 11.
-Cloud workspace: /home/user/mediflow · Mac mirror: ~/Documents/Workspaces/SW_Project
+Folder: ~/Documents/Workspaces/SW_Project · GitHub: https://github.com/anipriyo/mediflow-hms (private) · Live: https://mediflow-hms-6vw1.onrender.com
 Spec source of truth: docs/spec/requirements.json (50 FR, 10 NFR, 12 BR), docs/spec/team.json
 
 Stack: React 18 + Vite 5 + Tailwind 3 · Express 4 + better-sqlite3 · JWT + bcrypt · Vitest + Supertest + Playwright
 
-## 2026-10-22 – Online deployment (Render)
-- Goal from user: a public link anyone can open, even when the user's Mac is offline.
-- Chose a Render free web service (user picked it over "this Mac on Wi-Fi" and Railway/Fly.io). Rejected Vercel because serverless instances would each hold a separate SQLite copy.
-- Added `render.yaml` and a README section "Online deployment (Render)". Skipped the local `npm run build` check at the user's request; Render runs the build itself.
-- Next: the user opens https://render.com/deploy?repo=https://github.com/anipriyo/mediflow-hms, signs in with GitHub, grants repo access and clicks Deploy Blueprint. Then check the `https://mediflow-hms*.onrender.com` URL (`/api/health`, login page) and record the live URL here, in AGENTS.md and in the README.
+## 2026-10-22 – Live deployment, report v1.1, history cleanup
+- **Deployed** on a Render free web service from `render.yaml` (Blueprint `mediflow-hms`, Singapore, Node 22). Live at https://mediflow-hms-6vw1.onrender.com and verified: `/api/health` ok, home page, deep links and demo login all work. Every push to `main` redeploys. Vercel was rejected because each serverless instance would hold its own SQLite copy.
+- **Report v1.1** (`deliverables/` DOCX + PDF, 84 pages):
+  - Live demo link on the cover, in Group Details, Summary, SDD deployment view and Appendix B (clickable).
+  - House style requested by the user: no em dash, en dash, semicolon or colon anywhere in the report text. Implemented as `clean()` in `docs/report/lib.mjs` plus hand-reworded prose, enforced by `docs/report/check_text.py` (part of `npm run report`). Verified 0 of each in the DOCX and the PDF. UML diagram images were left as drawn (UML notation such as `name : type` is inside the images, not the text).
+  - Fixed two bugs that were already in v1.0: underscores vanished from identifiers such as `SAMPLE_COLLECTED` (the `_italic_` markup matched inside words), and tables were numbered out of reading order (Appendix B and the FR tables were built before the sections around them). All 59 tables and 30 figures are now in order.
+  - `finalize.py` now runs a LibreOffice Basic macro in a throw-away profile (works on macOS and Linux, no Python uno module needed) and maps Consolas to DejaVu Sans Mono. On macOS LibreOffice's own Python is killed by the OS, which is why the uno approach was dropped.
+- **History cleanup** (user request): removed all coding-assistant attribution from the repository and its history (co-author and session trailers, an assistant instruction file, mentions in this log) and force-pushed `main`. Commit hashes changed.
+- **Tooling on this Mac:** `gh` 2.103.0 (Homebrew) logged in as `anipriyo`, so `git push` works. LibreOffice was installed for the report build and uninstalled afterwards.
+- **Next:** nothing required. Before a demo, open the live link a minute early so the free server wakes up.
 
 ## 2026-10-22 – Publish to GitHub (Mac)
-- Done: added `AGENTS.md` (project brief); git-ignored `chat_history/`. Pre-push check: no secrets tracked (only the dev-default JWT secret in `server/config.js`), largest file is the 7 MB report PDF.
-- GitHub login: this Mac had no credentials, so installed `gh` 2.103.0 (Homebrew) and the user logged in through the browser device flow as `anipriyo` (`gh auth login --web --git-protocol https`, then `gh auth setup-git`).
-- Pushed `main` to https://github.com/anipriyo/mediflow-hms (private). Verified: remote `main` matches local HEAD, and the remote has 173 files.
+- Added `AGENTS.md` (project brief) and git-ignored `chat_history/`. Pre-push check: no secrets tracked (only the dev-default JWT secret in `server/config.js`), largest file is the 7 MB report PDF.
+- Pushed `main` to https://github.com/anipriyo/mediflow-hms (private) after logging in with `gh auth login --web --git-protocol https` and `gh auth setup-git`.
 
 ## Steps
 - [x] 0. Plan approved (6 roles, Group 11, members in team.json)
@@ -24,13 +28,9 @@ Stack: React 18 + Vite 5 + Tailwind 3 · Express 4 + better-sqlite3 · JWT + bcr
 - [x] 3. Frontend (client/src)
 - [x] 4. Tests (tests/unit, tests/integration, tests/e2e) + results JSON
 - [x] 5. UML (docs/uml/*.puml → png)
-- [~] 6. Report generator done (npm run report → docs/report/build/*.docx/pdf); regenerate after final test run
-- [ ] 7. Verify, zip, sync to Mac SW_Project, save to Project
+- [x] 6. Report (npm run report → docs/report/build/*.docx/pdf, copied to deliverables/)
+- [x] 7. Verify, zip, publish to GitHub, deploy online
 
 ## Notes
-- GitHub: repo created at https://github.com/anipriyo/mediflow-hms (private, empty). Org blocks GitHub connector → cannot push from cloud. User pushes from Mac: `cd ~/Documents/Workspaces/SW_Project && git push -u origin main`. Sync .git inside tarball to SW_Project.
-- Mac folder: /Users/manda_mac/Documents/Workspaces/SW_Project (granted ~/Documents). Stray empty ~/Documents/MediFlow-HMS (couldn't delete).
-- Scheduled resume check-in: trig_01RSy2v9X9QFht4FwDeBJyKR at 21:57Z.
-- Sync method: tar (excl node_modules/dist/db) → /mnt/user-data/outputs → SendUserFile → device_commit_files to SW_Project/.sync/ → device_bash `tar --overwrite -xzf`.
-- Defects log: docs/spec/defects.json (DEF-01..08). Test IDs referenced there must exist: IT-APT-03, IT-BIL-07, UT-IPD-05, UT-IPD-06, IT-IPD-06, IT-LAB-06, IT-IPD-02, ST-BIL-01.
-- 8. Edge-case/hardening pass requested by user (after everything) – then final: `npx vitest run --coverage` THEN `PW_CHROMIUM=/opt/pw-browsers/chromium-1194/chrome-linux/chrome npx playwright test` (vitest clears actuals.jsonl), then `npm run report`.
+- Defects log: docs/spec/defects.json (DEF-01..33). Every test ID referenced there must exist in the tests.
+- Final test order: `npx vitest run --coverage`, then `npx playwright test` (Vitest clears `docs/test-results/actuals.jsonl`), then `npm run report`.

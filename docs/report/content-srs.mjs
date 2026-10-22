@@ -25,7 +25,7 @@ export const USER_REQUIREMENTS = [
 
 export function srs() {
   const moduleName = Object.fromEntries(spec.modules.map((m) => [m.id, m.name]));
-  const frTables = spec.modules.flatMap((m) => {
+  const frTables = () => spec.modules.flatMap((m) => {
     const frs = spec.functional.filter((f) => f.module === m.id);
     if (!frs.length) return [];
     return [
@@ -49,7 +49,7 @@ export function srs() {
       '**Hospital stakeholders (future)** – administrators, doctors, front-desk, laboratory, pharmacy and billing staff who would validate the requirements.',
     ]),
     H3('1.3 Product overview'),
-    P('MediFlow connects the reception desk, doctors, laboratory, pharmacy, wards and billing through one shared patient record. A patient\'s journey – **registration → appointment → check-in and queue token → consultation → prescription / lab tests → billing → payment** (and for in-patients **admission → bed allocation → transfer → discharge**) – flows through the system without re-entering data. Three features distinguish the product from a basic HMS: a **smart queue** with tokens and waiting-time estimates, a **live bed board** with a safe admission/discharge workflow tied to billing clearance, and **role-based access control with an append-only audit trail**.'),
+    P('MediFlow connects the reception desk, doctors, laboratory, pharmacy, wards and billing through one shared patient record. A patient\'s journey (**registration → appointment → check-in and queue token → consultation → prescription / lab tests → billing → payment**, and for in-patients **admission → bed allocation → transfer → discharge**) flows through the system without re-entering data. Three features distinguish the product from a basic HMS. These are a **smart queue** with tokens and waiting-time estimates, a **live bed board** with a safe admission/discharge workflow tied to billing clearance, and **role-based access control with an append-only audit trail**.'),
     H3('1.4 Definitions, acronyms and abbreviations'),
     DataTable([{ header: 'Term', width: 2200 }, { header: 'Meaning', width: PORTRAIT_W - 2200 }], [
       ['HMS', 'Hospital Management System'],
@@ -133,7 +133,7 @@ export function srs() {
     H3('5.1 Business rules'),
     DataTable([{ header: 'ID', width: 900 }, { header: 'Business rule', width: PORTRAIT_W - 900 }], spec.businessRules.map((b) => [b.id, b.text]), { boldFirst: true }),
     TableCaption('Business rules referenced by the functional requirements'),
-    ...frTables,
+    ...frTables(),
 
     H2('6. Non-functional Requirements'),
     DataTable([{ header: 'ID', width: 900 }, { header: 'Category', width: 1900 }, { header: 'Requirement', width: PORTRAIT_W - 2800 }], spec.nonFunctional.map((n) => [n.id, n.category, n.text]), { boldFirst: true }),

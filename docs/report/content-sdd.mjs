@@ -1,5 +1,5 @@
 import { H1, H2, H3, P, Bullets, DataTable, TableCaption, Callout, Figure, Landscape, PORTRAIT_W } from './lib.mjs';
-import { spec, rbac, ROOT, loc } from './data.mjs';
+import { spec, rbac, ROOT, loc, LIVE_URL, LIVE_HOST } from './data.mjs';
 import path from 'node:path';
 import fs from 'node:fs';
 
@@ -88,7 +88,7 @@ function rbacMatrix() {
 export function sdd() {
   return [
     H1('PART B – SOFTWARE DESIGN DOCUMENT (SDD)', { pageBreak: true }),
-    Callout('The design follows IEEE Std 1016-2009 viewpoints: context and composition (architecture, modules), logical (class diagrams), interaction (sequence diagrams), state dynamics (state diagrams), information (data model) and interface (UI and API). All diagrams are UML 2.5 and were produced with PlantUML from the source files in docs/uml/.'),
+    Callout('The design follows the IEEE Std 1016-2009 viewpoints, namely context and composition (architecture, modules), logical (class diagrams), interaction (sequence diagrams), state dynamics (state diagrams), information (data model) and interface (UI and API). All diagrams are UML 2.5 and were produced with PlantUML from the source files in docs/uml/.'),
 
     H2('1. System Architecture'),
     P('MediFlow uses a **three-tier, layered client–server architecture**. The presentation tier is a React single-page application running in the browser; the application tier is a Node.js/Express server exposing a REST API; the data tier is an embedded SQLite database. Inside the server, responsibilities are separated into four layers, and each layer may only call the layer below it.'),
@@ -114,6 +114,7 @@ export function sdd() {
     TableCaption('Key design decisions'),
     H3('1.2 Deployment view'),
     ...Figure(uml('12-deployment.png'), 'Deployment diagram', { maxH: 380 }),
+    P(`The public demonstration uses the same single-server design. One Node.js web service on Render's cloud serves both the built React app and the REST API with an embedded SQLite database, at [${LIVE_HOST}](${LIVE_URL}). Render builds it from the GitHub repository (\`render.yaml\`) and redeploys on every push; HTTPS is terminated by Render's proxy, matching the reverse-proxy setup recommended for production.`),
     P(`The prototype consists of about ${loc.server.n.toLocaleString('en-IN')} lines of server code in ${loc.server.files} files, ${loc.client.n.toLocaleString('en-IN')} lines of client code in ${loc.client.files} files and ${loc.tests.n.toLocaleString('en-IN')} lines of automated tests.`),
 
     H2('2. Module / Component Description'),
@@ -140,11 +141,11 @@ export function sdd() {
     H2('4. Class Diagram'),
     P('The **domain class diagram** (Figure below) shows the main entities, their attributes, operations and associations with multiplicities. A patient books many appointments; each appointment has at most one consultation, which may produce one prescription (composed of items referencing medicines) and several lab orders. Wards are composed of beds; an admission is composed of one or more bed stays (one per bed occupied), which is how transfers and bed-day billing are modelled. Charges aggregate into invoices, which own payments.'),
     ...Figure(uml('02-class-domain.png'), 'Domain class diagram', { maxH: 850 }),
-    P('The **design class diagram** shows how the implementation realises the domain: controllers delegate to services, services use pure rule modules and the data-access layer, and cross-cutting services (Charge, Audit) are shared.'),
+    P('The **design class diagram** shows how the implementation realises the domain. Controllers delegate to services, services use pure rule modules and the data-access layer, and cross-cutting services (Charge, Audit) are shared.'),
     Landscape(...Figure(uml('03-class-design.png'), 'Design class diagram – service layer and dependencies', { maxW: 960, maxH: 590 })),
 
     H2('5. Use Case Diagram'),
-    P('Because a single diagram with six actors and forty use cases is unreadable, the use-case model is split into four diagrams: an overview (Part A, Section 4.3), outpatient care, inpatient care & billing, and administration & access control. «include» marks behaviour that always happens as part of the base use case; «extend» marks optional behaviour.'),
+    P('Because a single diagram with six actors and forty use cases is unreadable, the use-case model is split into four diagrams. These are an overview (Part A, Section 4.3), outpatient care, inpatient care & billing, and administration & access control. «include» marks behaviour that always happens as part of the base use case, while «extend» marks optional behaviour.'),
     ...Figure(uml('01b-use-case-outpatient.png'), 'Use case diagram – outpatient care', { maxH: 850 }),
     ...Figure(uml('01c-use-case-inpatient-billing.png'), 'Use case diagram – inpatient care and billing', { maxH: 560 }),
     ...Figure(uml('01d-use-case-admin.png'), 'Use case diagram – administration and access control', { maxH: 520 }),

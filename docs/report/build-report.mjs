@@ -6,8 +6,8 @@ import {
   Document, Packer, Paragraph, TextRun, AlignmentType, TableOfContents, Header, Footer, PageNumber, LevelFormat,
   PageOrientation, BorderStyle, ShadingType, ImageRun,
 } from 'docx';
-import { H1, H2, P, Bullets, DataTable, TableCaption, Callout, KVTable, Break, Spacer, C, FONT, PORTRAIT_W, resetCounters, runs, arrange } from './lib.mjs';
-import { spec, team, counts, tests, defects, ROOT } from './data.mjs';
+import { H1, H2, P, Bullets, DataTable, TableCaption, Callout, KVTable, Break, Spacer, C, FONT, PORTRAIT_W, resetCounters, runs, arrange, clean } from './lib.mjs';
+import { spec, team, counts, tests, defects, ROOT, LIVE_URL, LIVE_HOST } from './data.mjs';
 import { srs } from './content-srs.mjs';
 import { sdd } from './content-sdd.mjs';
 import { testPlan, testCaseTables, testResults, traceability } from './content-test.mjs';
@@ -25,7 +25,7 @@ const header = new Header({
   children: [new Paragraph({
     border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: C.line, space: 4 } },
     children: [
-      new TextRun({ text: 'MediFlow – Hospital Management System', font: FONT, size: 16, color: C.brand, bold: true }),
+      new TextRun({ text: 'MediFlow Hospital Management System', font: FONT, size: 16, color: C.brand, bold: true }),
       new TextRun({ text: `\tGroup ${String(team.groupNumber).replace(/\D/g, '') || team.groupNumber} · Assignment ${team.assignmentNumber}`, font: FONT, size: 16, color: C.muted }),
     ],
     tabStops: [{ type: 'right', position: 9638 }],
@@ -35,7 +35,7 @@ const headerLandscape = new Header({
   children: [new Paragraph({
     border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: C.line, space: 4 } },
     children: [
-      new TextRun({ text: 'MediFlow – Hospital Management System', font: FONT, size: 16, color: C.brand, bold: true }),
+      new TextRun({ text: 'MediFlow Hospital Management System', font: FONT, size: 16, color: C.brand, bold: true }),
       new TextRun({ text: `\tGroup ${String(team.groupNumber).replace(/\D/g, '') || team.groupNumber} · Assignment ${team.assignmentNumber}`, font: FONT, size: 16, color: C.muted }),
     ],
     tabStops: [{ type: 'right', position: 14570 }],
@@ -59,15 +59,16 @@ const logoPng = path.join(ROOT, 'docs/report/assets/logo.png');
 const cover = [
   new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 400, after: 80 }, children: [new TextRun({ text: 'INDIAN INSTITUTE OF INFORMATION TECHNOLOGY KALYANI', font: FONT, size: 26, bold: true, color: C.ink })] }),
   new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [new TextRun({ text: 'Department of Computer Science and Engineering', font: FONT, size: 22, color: C.muted })] }),
-  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 500 }, children: [new TextRun({ text: 'Software Engineering – Project Assignment', font: FONT, size: 22, color: C.muted })] }),
+  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 500 }, children: [new TextRun({ text: 'Software Engineering Project Assignment', font: FONT, size: 22, color: C.muted })] }),
   ...(fs.existsSync(logoPng) ? [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 200 }, children: [new ImageRun({ type: 'png', data: fs.readFileSync(logoPng), transformation: { width: 96, height: 96 } })] })] : []),
   new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 80 }, children: [new TextRun({ text: 'MediFlow', font: FONT, size: 64, bold: true, color: C.brand })] }),
   new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 300 }, children: [new TextRun({ text: 'Hospital Management System', font: FONT, size: 36, color: C.ink })] }),
-  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 60 }, children: [new TextRun({ text: `Assignment ${team.assignmentNumber}: ${team.assignmentTitle}`, font: FONT, size: 26, bold: true, color: C.ink })] }),
+  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 60 }, children: [new TextRun({ text: clean(`Assignment ${team.assignmentNumber} · ${team.assignmentTitle}`), font: FONT, size: 26, bold: true, color: C.ink })] }),
   new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 500 }, children: [new TextRun({ text: 'Software Requirements Specification · Software Design Document (UML) · Software Test Plan · Software Test Report', font: FONT, size: 20, color: C.muted })] }),
   new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 160 }, children: [new TextRun({ text: `GROUP ${groupNo.replace(/\D/g, '') || groupNo}`, font: FONT, size: 30, bold: true, color: C.brand })] }),
   DataTable([{ header: 'Sl.', width: 900 }, { header: 'Name of the member', width: 4400 }, { header: 'Registration number', width: 3400 }], team.members.map((m, i) => [String(i + 1), m.name, m.reg]), { size: 22 }),
   Spacer(400),
+  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 120 }, children: runs(`**Live demo at** [${LIVE_HOST}](${LIVE_URL})`, { size: 22 }) }),
   new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [new TextRun({ text: 'Submitted through Google Classroom · October 2026', font: FONT, size: 20, color: C.muted })] }),
 ];
 
@@ -77,9 +78,10 @@ const groupDetails = [
   KVTable([
     ['Group number', groupNo.replace(/\D/g, '') || groupNo],
     ['Assignment number and title', `Assignment ${team.assignmentNumber} – ${team.assignmentTitle}`],
-    ['Project name', 'MediFlow – Hospital Management System'],
+    ['Project name', 'MediFlow Hospital Management System'],
     ['Problem statement (brief)', 'Develop a system to manage patients, doctors, appointments, prescriptions, billing and medical records.'],
     ['Deliverables', 'SRS, SDD with UML diagrams, Software Test Plan and Test Report (this document) + working prototype (source code)'],
+    ['Live demo', `[${LIVE_HOST}](${LIVE_URL})`],
   ], [3000, PORTRAIT_W - 3000], { h1: 'Field', h2: 'Value' }),
   TableCaption('Group and assignment details'),
   DataTable([{ header: 'Sl.', width: 800 }, { header: 'Name', width: 4400 }, { header: 'Registration number', width: PORTRAIT_W - 5200 }], team.members.map((m, i) => [String(i + 1), m.name, m.reg]), { boldFirst: true }),
@@ -92,13 +94,15 @@ const groupDetails = [
     ['0.9', '21-Oct-2026', 'Prototype implemented; unit, integration, system and acceptance tests executed'],
     ['0.95', '22-Oct-2026', 'Robustness / edge-case testing; additional defects fixed and regression-tested'],
     ['1.0', '22-Oct-2026', 'Final report for submission'],
+    ['1.1', '22-Oct-2026', 'Prototype deployed online (Render); live demo link added'],
   ]),
   TableCaption('Revision history'),
   Break(),
   H2('Summary'),
   P(`MediFlow is a web-based Hospital Management System that manages **patients, doctors, appointments, prescriptions, billing and medical records**, extended with laboratory, pharmacy and in-patient (bed and admission) management. Beyond the core requirements, it introduces a **smart queue** with tokens and waiting-time estimates, a **live bed board** with a discharge workflow tied to billing clearance, and **role-based access control with an append-only audit trail** for six staff roles.`),
-  P(`This report contains the **Software Requirements Specification** (Part A: ${spec.functional.length} functional and ${spec.nonFunctional.length} non-functional requirements, ${spec.businessRules.length} business rules, 14 user requirements), the **Software Design Document** (Part B: layered architecture, 13 modules and 16 UML diagrams – use case, class, sequence, state, activity, component and deployment – plus a logical data model), the **Software Test Plan** (Part C) and the **Software Test Report** (Part D). A working prototype (React + Node.js + SQLite) was built so that the test report contains real results: **${counts.pass} of ${counts.total} automated test cases passed** in the final run, and ${defects.length} defects found during testing are documented with their resolution.`),
-  Callout('How to run the prototype: install Node.js 20+, then in the project folder run `npm install` and `npm run dev`, and open http://localhost:5173. Demo accounts (password Mediflow@123): admin, reception, dr.sharma, lab, pharmacy, billing. See Appendix B.'),
+  P(`This report contains the **Software Requirements Specification** (Part A, with ${spec.functional.length} functional and ${spec.nonFunctional.length} non-functional requirements, ${spec.businessRules.length} business rules and 14 user requirements), the **Software Design Document** (Part B, with a layered architecture, 13 modules, 16 UML diagrams of the use case, class, sequence, state, activity, component and deployment kinds, and a logical data model), the **Software Test Plan** (Part C) and the **Software Test Report** (Part D). A working prototype (React + Node.js + SQLite) was built so that the test report contains real results. In the final run **${counts.pass} of ${counts.total} automated test cases passed**, and ${defects.length} defects found during testing are documented with their resolution.`),
+  Callout(`**Live demo.** The prototype runs online at [${LIVE_HOST}](${LIVE_URL}) and opens in any browser with no installation. Sign in with one of the demo accounts listed in Appendix B (password Mediflow@123). It uses a free cloud plan, so the first visit after 15 idle minutes takes about a minute to load, and the demo data is reset to fresh records dated that day whenever the server restarts.`),
+  Callout('**Running it locally.** Install Node.js 20 or later, run `npm install` and then `npm run dev` in the project folder, and open localhost port 5173 in a browser. The demo accounts are admin, reception, dr.sharma, lab, pharmacy and billing, all with the password Mediflow@123. See Appendix B for details.'),
 ];
 
 const toc = [
@@ -106,9 +110,11 @@ const toc = [
   new TableOfContents('Table of Contents', { hyperlink: true, headingStyleRange: '1-3' }),
 ];
 
-const appendixB = [
+const appendixB = () => [
   H1('APPENDIX B – RUNNING THE PROTOTYPE', { pageBreak: true }),
-  P('**Requirements:** Node.js 20 or later (includes npm). No database server is needed – SQLite is embedded and the demo data is generated automatically on first start.'),
+  P(`**Online.** The prototype is deployed at [${LIVE_HOST}](${LIVE_URL}) as a free Render web service. Render builds it from the GitHub repository using \`render.yaml\` and redeploys it on every push. No installation is needed, so simply sign in with any demo account below. The free plan sleeps after 15 idle minutes (the next visit takes about a minute) and recreates the demo database on every restart.`),
+  P('**Locally.** The commands below run the prototype on your own computer.'),
+  P('**Requirements:** Node.js 20 or later (includes npm). No database server is needed, because SQLite is embedded and the demo data is generated automatically on first start.'),
   DataTable([{ header: 'Command', width: 3400 }, { header: 'Purpose', width: PORTRAIT_W - 3400 }], [
     ['`npm install`', 'Install dependencies (once)'],
     ['`npm run dev`', 'Start the API (port 4000) and the web app (http://localhost:5173) with live reload'],
@@ -128,7 +134,7 @@ const appendixB = [
     ['pharmacy', 'Pharmacist', 'Dispense prescriptions, stock alerts, restock'],
     ['billing', 'Billing Staff', 'Generate invoice from “To bill”, record payment, print receipt'],
   ], { boldFirst: true }),
-  TableCaption('Demo accounts (password: Mediflow@123)'),
+  TableCaption('Demo accounts (all use the password Mediflow@123)'),
   P('**Project structure:** `server/` (Express API: routes, middleware, services, domain rules, database), `client/` (React app), `tests/` (unit, integration, e2e), `docs/spec/` (requirements, defects), `docs/uml/` (PlantUML sources and images), `docs/test-results/` (raw results), `docs/report/` (report generator).'),
 ];
 
@@ -166,8 +172,8 @@ function portrait(children) {
 }
 
 const doc = new Document({
-  creator: 'Group 11 – MediFlow',
-  title: 'MediFlow – Hospital Management System: SRS, SDD, Test Plan and Test Report',
+  creator: 'Group 11, MediFlow',
+  title: 'MediFlow Hospital Management System. SRS, SDD, Test Plan and Test Report',
   description: 'Software Engineering Assignment 1',
   features: { updateFields: true },
   numbering,
@@ -179,7 +185,7 @@ const doc = new Document({
     landscape(testCaseTables()),
     ...portrait(testResults()),
     landscape(traceability()),
-    ...portrait(appendixB),
+    ...portrait(appendixB()),
   ],
 });
 

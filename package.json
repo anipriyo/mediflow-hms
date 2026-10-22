@@ -18,7 +18,7 @@
     "test:e2e": "playwright test",
     "test:all": "vitest run && playwright test",
     "test:coverage": "vitest run --coverage",
-    "report": "node docs/report/build-report.mjs && python3 docs/report/finalize.py"
+    "report": "node docs/report/build-report.mjs && python3 docs/report/finalize.py && python3 docs/report/check_text.py"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

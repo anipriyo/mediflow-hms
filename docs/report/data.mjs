@@ -6,6 +6,10 @@ import { PERMISSIONS, ROLES, ROLE_LABELS } from '../../server/domain/permissions
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.resolve(__dirname, '../..');
+
+/** Public deployment of the prototype (Render free web service, see render.yaml). */
+export const LIVE_URL = 'https://mediflow-hms-6vw1.onrender.com';
+export const LIVE_HOST = LIVE_URL.replace(/^https?:\/\//, '');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 const json = (p) => JSON.parse(read(p));
 const exists = (p) => fs.existsSync(path.join(ROOT, p));

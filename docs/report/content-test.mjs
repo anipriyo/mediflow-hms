@@ -172,7 +172,7 @@ export function testCaseTables() {
   sections.push(
     H1('PART D – SOFTWARE TEST REPORT', { pageBreak: true }),
     H2('8. Test Cases'),
-    P(`This section lists every executed test case with its expected and actual result and pass/fail status. The **actual result** column is not typed by hand: each automated test records what it observed (HTTP status, message, values) while running, and the report is generated from that log. Final execution: ${fmtTs(lastRun())} IST.`),
+    P(`This section lists every executed test case with its expected and actual result and pass/fail status. The **actual result** column is not typed by hand. Each automated test records what it observed (HTTP status, message, values) while running, and the report is generated from that log. The final execution took place on ${fmtTs(lastRun())} IST.`),
   );
   const levels = [['Unit', '8.1 Unit test cases'], ['Integration', '8.2 Integration test cases'], ['System', '8.3 System test cases'], ['Acceptance', '8.4 Acceptance test cases']];
   for (const [lvl, title] of levels) {

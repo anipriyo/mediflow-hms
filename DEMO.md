@@ -1,5 +1,7 @@
 # MediFlow – how to run and demonstrate
 
+**No setup needed:** open **https://mediflow-hms-6vw1.onrender.com** and skip to step 2. The free server sleeps after 15 idle minutes, so open the link a minute before the demo to wake it. Its demo data resets to fresh records dated that day whenever it restarts.
+
 ## 1. Start the app
 
 Open **Terminal** (⌘ + Space → "Terminal") and run:
