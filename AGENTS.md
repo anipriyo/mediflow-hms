@@ -30,7 +30,7 @@ Feature-complete and submitted-ready. Final report is in `deliverables/`. Remain
 
 ## GitHub
 - Remote: `https://github.com/anipriyo/mediflow-hms` (private), branch `main`.
-- This Mac has no stored GitHub login; pushing needs `gh auth login` (or a PAT) done by the user. Never type credentials for the user.
+- This Mac is logged in through `gh` (account `anipriyo`, HTTPS, git credential helper set by `gh auth setup-git`), so a plain `git push` works. On a new machine: `brew install gh`, then the user runs `gh auth login --web`. Never type credentials for the user.
 
 ## Project rules
 - Requirement, defect and test IDs must stay consistent across `docs/spec/*.json`, tests and the report; a defect's test ID must exist in the tests.

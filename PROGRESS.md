@@ -8,8 +8,8 @@ Stack: React 18 + Vite 5 + Tailwind 3 · Express 4 + better-sqlite3 · JWT + bcr
 
 ## 2026-10-22 – Publish to GitHub (Mac)
 - Done: added `AGENTS.md` (project brief); git-ignored `chat_history/`. Pre-push check: no secrets tracked (only the dev-default JWT secret in `server/config.js`), largest file is the 7 MB report PDF.
-- Blocked: `git push -u origin main` fails because this Mac has no GitHub credentials (no SSH key, nothing in Keychain, `gh` not installed). The user must log in once: `brew install gh`, `gh auth login --web --git-protocol https`, `gh auth setup-git`, then `git push -u origin main`.
-- Next: after the push, confirm `main` is on https://github.com/anipriyo/mediflow-hms and tick step 7.
+- GitHub login: this Mac had no credentials, so installed `gh` 2.103.0 (Homebrew) and the user logged in through the browser device flow as `anipriyo` (`gh auth login --web --git-protocol https`, then `gh auth setup-git`).
+- Pushed `main` to https://github.com/anipriyo/mediflow-hms (private). Verified: remote `main` matches local HEAD, and the remote has 173 files.
 
 ## Steps
 - [x] 0. Plan approved (6 roles, Group 11, members in team.json)
