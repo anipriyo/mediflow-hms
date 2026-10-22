@@ -6,6 +6,12 @@ Spec source of truth: docs/spec/requirements.json (50 FR, 10 NFR, 12 BR), docs/s
 
 Stack: React 18 + Vite 5 + Tailwind 3 · Express 4 + better-sqlite3 · JWT + bcrypt · Vitest + Supertest + Playwright
 
+## 2026-10-22 – Online deployment (Render)
+- Goal from user: a public link anyone can open, even when the user's Mac is offline.
+- Chose a Render free web service (user picked it over "this Mac on Wi-Fi" and Railway/Fly.io). Rejected Vercel because serverless instances would each hold a separate SQLite copy.
+- Added `render.yaml` and a README section "Online deployment (Render)". Skipped the local `npm run build` check at the user's request; Render runs the build itself.
+- Next: the user opens https://render.com/deploy?repo=https://github.com/anipriyo/mediflow-hms, signs in with GitHub, grants repo access and clicks Deploy Blueprint. Then check the `https://mediflow-hms*.onrender.com` URL (`/api/health`, login page) and record the live URL here, in AGENTS.md and in the README.
+
 ## 2026-10-22 – Publish to GitHub (Mac)
 - Done: added `AGENTS.md` (project brief); git-ignored `chat_history/`. Pre-push check: no secrets tracked (only the dev-default JWT secret in `server/config.js`), largest file is the 7 MB report PDF.
 - GitHub login: this Mac had no credentials, so installed `gh` 2.103.0 (Homebrew) and the user logged in through the browser device flow as `anipriyo` (`gh auth login --web --git-protocol https`, then `gh auth setup-git`).

@@ -146,12 +146,19 @@ docs/test-results/ raw test results, coverage, run log
 docs/report/       report generator → build/MediFlow_HMS_Group11_Report.docx / .pdf
 ```
 
+## Online deployment (Render)
+
+The app is deployed as one free Render web service defined in [render.yaml](render.yaml). Render builds the React app, serves it from Express, and runs on Render's servers, so the link works even when your own computer is off.
+
+- **First deploy:** open https://render.com/deploy?repo=https://github.com/anipriyo/mediflow-hms, sign in with GitHub, give Render access to the `mediflow-hms` repository, and click **Deploy Blueprint**. The first build takes about 5 minutes.
+- **Updates:** every `git push` to `main` redeploys automatically.
+- **Free-tier behaviour:** the service sleeps after 15 minutes without visitors, and the next visit takes about a minute to wake it. The database is not kept: every deploy, restart or wake-up starts with fresh demo data dated that day.
+- **Public access:** anyone with the link can sign in with the demo accounts, so enter only made-up data.
+
 ## Publishing to GitHub
 
-The repository already points at `https://github.com/anipriyo/mediflow-hms` (private). From this folder run:
+The repository is `https://github.com/anipriyo/mediflow-hms` (private). After committing, run:
 
 ```bash
-git push -u origin main
+git push
 ```
-
-(or, with the GitHub CLI: `gh repo create mediflow-hms --private --source=. --push` if the remote does not exist yet).
