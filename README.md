@@ -159,7 +159,7 @@ Live at **https://mediflow-hms-6vw1.onrender.com**. The app is deployed as one f
 
 ## Publishing to GitHub
 
-The repository is `https://github.com/anipriyo/mediflow-hms` (private). After committing, run:
+The repository is public at `https://github.com/anipriyo/mediflow-hms`. After committing, run:
 
 ```bash
 git push

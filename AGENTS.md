@@ -29,7 +29,7 @@ Feature-complete and ready to submit. Final report is in `deliverables/`. Live d
 - Demo accounts: see README; all share the password `Mediflow@123` (seed data only).
 
 ## GitHub
-- Remote: `https://github.com/anipriyo/mediflow-hms` (private), branch `main`.
+- Remote: `https://github.com/anipriyo/mediflow-hms` (public since 22 Oct 2026), branch `main`.
 - This Mac is logged in through `gh` (account `anipriyo`, HTTPS, git credential helper set by `gh auth setup-git`), so a plain `git push` works. On a new machine: `brew install gh`, then the user runs `gh auth login --web`. Never type credentials for the user.
 
 ## Deployment

@@ -1,7 +1,7 @@
 # MediFlow build – progress log
 
 Project: Hospital Management System (Assignment 1), Group 11.
-Folder: ~/Documents/Workspaces/SW_Project · GitHub: https://github.com/anipriyo/mediflow-hms (private) · Live: https://mediflow-hms-6vw1.onrender.com
+Folder: ~/Documents/Workspaces/SW_Project · GitHub: https://github.com/anipriyo/mediflow-hms (public) · Live: https://mediflow-hms-6vw1.onrender.com
 Spec source of truth: docs/spec/requirements.json (50 FR, 10 NFR, 12 BR), docs/spec/team.json
 
 Stack: React 18 + Vite 5 + Tailwind 3 · Express 4 + better-sqlite3 · JWT + bcrypt · Vitest + Supertest + Playwright
@@ -15,6 +15,7 @@ Stack: React 18 + Vite 5 + Tailwind 3 · Express 4 + better-sqlite3 · JWT + bcr
   - `finalize.py` now runs a LibreOffice Basic macro in a throw-away profile (works on macOS and Linux, no Python uno module needed) and maps Consolas to DejaVu Sans Mono. On macOS LibreOffice's own Python is killed by the OS, which is why the uno approach was dropped.
 - **History cleanup** (user request): removed all coding-assistant attribution from the repository and its history (co-author and session trailers, an assistant instruction file, mentions in this log) and force-pushed `main`. Commit hashes changed.
 - **Tooling on this Mac:** `gh` 2.103.0 (Homebrew) logged in as `anipriyo`, so `git push` works. LibreOffice was installed for the report build and uninstalled afterwards.
+- **Repo made public** at the user's request after a final secrets scan (none found). Commit author emails and the group's names and registration numbers are now public.
 - **Next:** nothing required. Before a demo, open the live link a minute early so the free server wakes up.
 
 ## 2026-10-22 – Publish to GitHub (Mac)
