@@ -1,0 +1,38 @@
+# MediFlow HMS – project brief
+
+Software Engineering **Assignment 1 (Hospital Management System), Group 11**. A full-stack web HMS (patients, doctors, appointments, smart queue, consultation, lab, pharmacy, beds/admissions, billing, reports, audit) plus the assignment report (SRS, SDD with UML, Test Plan, Test Report).
+
+Read `PROGRESS.md` (newest entry first) before doing anything. `README.md` has the user-facing run instructions and demo accounts; `DEMO.md` is the 10-minute demo script.
+
+## Status
+Feature-complete and submitted-ready. Final report is in `deliverables/`. Remaining work is only publishing and any fixes the group asks for.
+
+## Folder map
+| Path | What |
+|---|---|
+| `server/` | Express 4 API: `domain/` pure rules, `services/` use cases, `routes/` + `middleware/` (JWT, RBAC), `db/` schema, connection, seed |
+| `client/` | React 18 + Vite 5 + Tailwind 3 SPA (`pages/`, `components/`, `lib/`) |
+| `tests/` | `unit/`, `integration/` (Vitest + Supertest), `e2e/` (Playwright) |
+| `docs/spec/` | Source of truth: `requirements.json` (50 FR, 10 NFR, 12 BR), `defects.json` (DEF-01..33), `team.json` |
+| `docs/uml/` | PlantUML sources; rendered PNGs in `png/` |
+| `docs/test-results/` | Raw results, coverage, `run-log.md` (feeds the report) |
+| `docs/report/` | Report generator (`build-report.mjs` + `finalize.py`) → `docs/report/build/` (git-ignored) |
+| `docs/screenshots/` | App screenshots used in the report |
+| `deliverables/` | Final report DOCX + PDF (tracked); source zip (ignored) |
+| `data/` | SQLite DB at runtime (ignored, recreated by `npm run seed`) |
+
+## Environment and commands
+- Node 20+ (via nvm). SQLite is embedded (better-sqlite3), no DB server.
+- `npm install` once, then `npm run seed` and `npm run dev` → http://localhost:5173 (API on :4000).
+- Tests: `npm test`, `npm run test:coverage`, `npm run test:e2e` (needs `npx playwright install chromium`).
+- Report: run `npm run test:coverage` **before** `npm run test:e2e` (Vitest clears `docs/test-results/actuals.jsonl`), then `npm run report` (needs LibreOffice for PDF/TOC). Copy the outputs from `docs/report/build/` into `deliverables/`.
+- Demo accounts: see README; all share the password `Mediflow@123` (seed data only).
+
+## GitHub
+- Remote: `https://github.com/anipriyo/mediflow-hms` (private), branch `main`.
+- This Mac has no stored GitHub login; pushing needs `gh auth login` (or a PAT) done by the user. Never type credentials for the user.
+
+## Project rules
+- Requirement, defect and test IDs must stay consistent across `docs/spec/*.json`, tests and the report; a defect's test ID must exist in the tests.
+- Demo data is dated relative to seed time; reseed on demo day.
+- `chat_history/` is local only (git-ignored).

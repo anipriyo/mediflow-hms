@@ -6,6 +6,11 @@ Spec source of truth: docs/spec/requirements.json (50 FR, 10 NFR, 12 BR), docs/s
 
 Stack: React 18 + Vite 5 + Tailwind 3 · Express 4 + better-sqlite3 · JWT + bcrypt · Vitest + Supertest + Playwright
 
+## 2026-10-22 – Publish to GitHub (Mac)
+- Done: added `AGENTS.md` (project brief); git-ignored `chat_history/`. Pre-push check: no secrets tracked (only the dev-default JWT secret in `server/config.js`), largest file is the 7 MB report PDF.
+- Blocked: `git push -u origin main` fails because this Mac has no GitHub credentials (no SSH key, nothing in Keychain, `gh` not installed). The user must log in once: `brew install gh`, `gh auth login --web --git-protocol https`, `gh auth setup-git`, then `git push -u origin main`.
+- Next: after the push, confirm `main` is on https://github.com/anipriyo/mediflow-hms and tick step 7.
+
 ## Steps
 - [x] 0. Plan approved (6 roles, Group 11, members in team.json)
 - [x] 1. Requirements frozen (docs/spec/requirements.json)
