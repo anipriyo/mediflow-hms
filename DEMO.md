@@ -6,11 +6,12 @@ Open **Terminal** (⌘ + Space → "Terminal") and run:
 
 ```bash
 cd ~/Documents/Workspaces/SW_Project
-node -v            # must be v20 or newer – if not: nvm install 22 && nvm use 22
-npm install        # first time only (≈1 min)
-npm run seed       # fresh demo data for *today* – do this on the morning of the demo
-npm run dev        # starts the API (port 4000) and the web app (port 5173)
+npm install
+npm run seed
+npm run dev
 ```
+
+Run the lines one at a time, without `#` comments. `npm install` is only needed the first time, and `npm run seed` loads fresh demo data dated *today*. If something fails, see *How to run → Troubleshooting* in [README.md](README.md).
 
 Open **http://localhost:5173** in Chrome or Safari. Keep the Terminal window open while you demo; press **Ctrl + C** to stop.
 Next time you only need `cd …`, `npm run seed` (optional) and `npm run dev`.
