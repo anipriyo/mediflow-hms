@@ -1,4 +1,4 @@
-import { H1, H2, H3, P, Bullets, DataTable, TableCaption, Callout, PORTRAIT_W, LANDSCAPE_W, Small } from './lib.mjs';
+import { H1, PartH1, H2, H3, P, Bullets, DataTable, TableCaption, Callout, PORTRAIT_W, LANDSCAPE_W, Small } from './lib.mjs';
 import { spec, tests, counts, runLog, coverage, defects } from './data.mjs';
 import { USER_REQUIREMENTS } from './content-srs.mjs';
 
@@ -17,7 +17,7 @@ const LEVEL_INFO = {
 export function testPlan() {
   const frCount = spec.functional.length;
   return [
-    H1('PART C – SOFTWARE TEST PLAN', { pageBreak: true }),
+    PartH1('C', 'SOFTWARE TEST PLAN'),
     Callout('This plan follows the structure of IEEE 829 / ISO/IEC/IEEE 29119-3. Test cases are automated and carry the identifier of the requirement they verify, so the plan, the test report and the traceability matrix are generated from the same source.'),
 
     H2('1. Testing Objectives'),
@@ -33,7 +33,7 @@ export function testPlan() {
     H2('2. Testing Scope'),
     H3('2.1 In scope'),
     Bullets([
-      'All thirteen modules listed in Part B, Section 2, through the REST API and through the user interface.',
+      'All thirteen modules listed in the Software Design Document, Section 2, through the REST API and through the user interface.',
       'Business rules and state machines (appointment, bed, admission, lab order, invoice).',
       'Security: authentication, lock-out, token tampering/expiry, logout revocation, RBAC, SQL-injection resistance, password storage, audit integrity.',
       'Performance of typical API requests on the demo dataset (NFR-01) and responsive layout at phone width (NFR-05).',
@@ -94,7 +94,7 @@ export function testPlan() {
       ['System & acceptance test implementation', 'Test engineer acting as end users of each role', 'tests/e2e, screenshots'],
       ['Execution and defect logging', 'Test engineer', 'Run log, actual results, defect log'],
       ['Re-testing and regression', 'Developers + test engineer', 'Updated run log'],
-      ['Test summary report', 'Test lead', 'Part D of this document'],
+      ['Test summary report', 'Test lead', 'Software Test Report'],
     ], { boldFirst: true }),
     TableCaption('Test activities and responsibilities'),
     H3('3.6 Risks and mitigations'),
@@ -107,7 +107,7 @@ export function testPlan() {
     TableCaption('Test risks'),
 
     H2('4. Unit Testing'),
-    P(`**Objective:** verify each business rule in isolation. **Approach:** white-box tests of the pure functions in \`server/domain\`, applying boundary-value and state-transition techniques; no database or network is involved, so each test runs in milliseconds. **Coverage:** ${coverage ? `domain-rule modules ${coverage.domain.lines}% lines / ${coverage.domain.branches}% branches; whole server ${coverage.total.lines}% lines / ${coverage.total.branches}% branches (unit + integration suites, V8 coverage)` : 'see Part D'}.`),
+    P(`**Objective:** verify each business rule in isolation. **Approach:** white-box tests of the pure functions in \`server/domain\`, applying boundary-value and state-transition techniques; no database or network is involved, so each test runs in milliseconds. **Coverage:** ${coverage ? `domain-rule modules ${coverage.domain.lines}% lines / ${coverage.domain.branches}% branches; whole server ${coverage.total.lines}% lines / ${coverage.total.branches}% branches (unit + integration suites, V8 coverage)` : 'see the Software Test Report'}.`),
     DataTable([{ header: 'Module under test', width: 3000 }, { header: 'Rules verified', width: 4638 }, { header: 'Cases', width: 2000 }], [
       ['appointmentRules, time', 'Slot generation, working days, slot validation, overlap detection, free slots, appointment transitions', String(tests.filter((t) => t.id.startsWith('UT-APT')).length)],
       ['queueRules', 'Priority ordering, token sequence, ETA with and without consultation in progress', String(tests.filter((t) => t.id.startsWith('UT-QUE')).length)],
@@ -137,7 +137,7 @@ export function testPlan() {
     TableCaption('System test cases'),
 
     H2('7. Acceptance Testing'),
-    P('**Objective:** confirm that the system satisfies the user requirements (Part A, Section 7) and is ready for use. **Approach:** scenario-based acceptance tests that follow a patient through several roles in one continuous flow, written from the acceptance criteria of the user stories. In this academic project the team acted as the hospital users; the scenarios are scripted and automated (Playwright) so that they are repeatable. A real deployment would add a supervised user-acceptance session with hospital staff and formal sign-off.'),
+    P('**Objective:** confirm that the system satisfies the user requirements (SRS, Section 7) and is ready for use. **Approach:** scenario-based acceptance tests that follow a patient through several roles in one continuous flow, written from the acceptance criteria of the user stories. In this academic project the team acted as the hospital users; the scenarios are scripted and automated (Playwright) so that they are repeatable. A real deployment would add a supervised user-acceptance session with hospital staff and formal sign-off.'),
     DataTable([{ header: 'ID', width: 1100 }, { header: 'Acceptance scenario', width: 5400 }, { header: 'User requirements validated', width: PORTRAIT_W - 6500 }], tests.filter((t) => t.level === 'Acceptance').map((t) => [t.id, t.title, (t.ur || urFor(t)).join(', ')]), { boldFirst: true }),
     TableCaption('Acceptance test scenarios'),
     P('**Acceptance criteria:** all acceptance scenarios pass; no open Critical/High defects; every user requirement UR-01 … UR-14 is validated by at least one acceptance or system test.'),
@@ -170,11 +170,11 @@ export function testCaseTables() {
   ];
   const sections = [];
   sections.push(
-    H1('PART D – SOFTWARE TEST REPORT', { pageBreak: true }),
-    H2('8. Test Cases'),
+    PartH1('D', 'SOFTWARE TEST REPORT'),
+    H2('1. Test Cases'),
     P(`This section lists every executed test case with its expected and actual result and pass/fail status. The **actual result** column is not typed by hand. Each automated test records what it observed (HTTP status, message, values) while running, and the report is generated from that log. The final execution took place on ${fmtTs(lastRun())} IST.`),
   );
-  const levels = [['Unit', '8.1 Unit test cases'], ['Integration', '8.2 Integration test cases'], ['System', '8.3 System test cases'], ['Acceptance', '8.4 Acceptance test cases']];
+  const levels = [['Unit', '1.1 Unit test cases'], ['Integration', '1.2 Integration test cases'], ['System', '1.3 System test cases'], ['Acceptance', '1.4 Acceptance test cases']];
   for (const [lvl, title] of levels) {
     const rows = tests.filter((t) => t.level === lvl).map((t) => [
       t.id,
@@ -197,20 +197,20 @@ export function testResults() {
   const frCovered = spec.functional.filter((f) => tests.some((t) => (t.fr || []).includes(f.id) && t.status === 'PASS'));
   const sevCount = (sev) => defects.filter((d) => d.severity === sev).length;
   return [
-    H2('9. Expected Results'),
-    P('Expected results were defined **before** execution from the requirements and business rules (not from the observed behaviour) and are stored with each test case. They specify the exact HTTP status code, error code or message, state transition, calculated amount or UI element that must appear – for example “409 DOCTOR_SLOT_TAKEN”, “ETA 0, 12, 24 min”, “total ₹1,111.05” or “bed GA-01 CLEANING”. The expected result of every case is shown in the tables of Section 8.'),
+    H2('2. Expected Results'),
+    P('Expected results were defined **before** execution from the requirements and business rules (not from the observed behaviour) and are stored with each test case. They specify the exact HTTP status code, error code or message, state transition, calculated amount or UI element that must appear – for example “409 DOCTOR_SLOT_TAKEN”, “ETA 0, 12, 24 min”, “total ₹1,111.05” or “bed GA-01 CLEANING”. The expected result of every case is shown in the tables of Section 1.'),
 
-    H2('10. Actual Results'),
+    H2('3. Actual Results'),
     P('Actual results were captured automatically at run time. The final regression run executed the complete suite on a clean build:'),
     DataTable([
       { header: 'Test level', width: 2000 }, { header: 'Planned', width: 1300 }, { header: 'Executed', width: 1300 }, { header: 'Passed', width: 1300 }, { header: 'Failed', width: 1300 }, { header: 'Pass rate', width: PORTRAIT_W - 7200 },
     ], [...s.map((x) => [x.level, String(x.total), String(x.total), String(x.pass), String(x.fail), pct(x.pass, x.total)]), ['Total', String(tot.total), String(tot.total), String(tot.pass), String(tot.fail), pct(tot.pass, tot.total)]], { boldFirst: true }),
     TableCaption('Test execution summary (final run)'),
-    H3('10.1 Execution history'),
-    P('The suite was executed several times during development. Failures in earlier runs and their causes are recorded honestly below; failures caused by mistakes in test scripts are distinguished from product defects (Section 12).'),
+    H3('3.1 Execution history'),
+    P('The suite was executed several times during development. Failures in earlier runs and their causes are recorded honestly below; failures caused by mistakes in test scripts are distinguished from product defects (Section 5).'),
     DataTable([{ header: 'Run', width: 600 }, { header: 'Date / time (IST)', width: 1700 }, { header: 'Scope', width: 2100 }, { header: 'Result', width: 1500 }, { header: 'Notes', width: PORTRAIT_W - 5900 }], runLog, { size: 16, boldFirst: true }),
     TableCaption('Test run log'),
-    H3('10.2 Code coverage'),
+    H3('3.2 Code coverage'),
     coverage
       ? DataTable([{ header: 'Scope', width: 3200 }, { header: 'Lines', width: 1600 }, { header: 'Branches', width: 1600 }, { header: 'Functions', width: 1600 }, { header: 'Statements', width: PORTRAIT_W - 8000 }], [
         ['Domain rules (server/domain)', `${coverage.domain.lines}%`, `${coverage.domain.branches}%`, `${coverage.domain.functions}%`, `${coverage.domain.statements}%`],
@@ -219,7 +219,7 @@ export function testResults() {
       ], { boldFirst: true })
       : P('Coverage data not available.'),
     TableCaption('Code coverage of the server by unit + integration tests (V8)'),
-    H3('10.3 Non-functional results'),
+    H3('3.3 Non-functional results'),
     DataTable([{ header: 'NFR', width: 1100 }, { header: 'Measured / observed', width: 6400 }, { header: 'Verdict', width: PORTRAIT_W - 7500 }], [
       ['NFR-01', nfr('IT-NFR-03')?.actual || 'see IT-NFR-03', nfr('IT-NFR-03')?.status || '—'],
       ['NFR-02', `${nfr('IT-NFR-02')?.actual || ''}; ${nfr('IT-NFR-01')?.actual || ''}; forged/expired tokens rejected (IT-AUTH-05)`, nfr('IT-NFR-02')?.status === 'PASS' && nfr('IT-NFR-01')?.status === 'PASS' ? 'PASS' : 'FAIL'],
@@ -232,9 +232,9 @@ export function testResults() {
     ], { boldFirst: true, statusCol: 2, size: 17 }),
     TableCaption('Non-functional requirement results'),
 
-    H2('11. Pass/Fail Status'),
+    H2('4. Pass/Fail Status'),
     P(`**Overall status: ${tot.fail === 0 ? 'PASS' : 'FAIL'}.** ${tot.pass} of ${tot.total} test cases passed (${pct(tot.pass, tot.total)}) in the final run. ${frCovered.length} of ${spec.functional.length} functional requirements are covered by at least one passing test (see the traceability matrix in Appendix A). ${defects.filter((d) => d.status === 'Fixed').length} defects were found and fixed during testing and ${defects.filter((d) => d.status !== 'Fixed').length} low-severity enhancement was deferred; no Critical or High defect is open.`),
-    DataTable([{ header: 'Exit criterion (Part C, 3.3)', width: 5600 }, { header: 'Result', width: 2500 }, { header: 'Met?', width: PORTRAIT_W - 8100 }], [
+    DataTable([{ header: 'Exit criterion (Test Plan, Section 3.3)', width: 5600 }, { header: 'Result', width: 2500 }, { header: 'Met?', width: PORTRAIT_W - 8100 }], [
       ['100% of planned test cases executed', `${tot.total}/${tot.total} executed`, 'PASS'],
       ['All test cases pass', `${tot.pass}/${tot.total} passed`, tot.fail === 0 ? 'PASS' : 'FAIL'],
       ['No open Critical/High defects', `${defects.filter((d) => ['Critical', 'High'].includes(d.severity) && d.status !== 'Fixed').length} open`, defects.some((d) => ['Critical', 'High'].includes(d.severity) && d.status !== 'Fixed') ? 'FAIL' : 'PASS'],
@@ -243,12 +243,12 @@ export function testResults() {
     ], { statusCol: 2, boldFirst: true }),
     TableCaption('Exit criteria evaluation'),
 
-    H2('12. Defect Reporting'),
+    H2('5. Defect Reporting'),
     P(`${defects.length} defects were reported during system testing and code review: ${['High', 'Medium', 'Low'].map((sv) => `${sevCount(sv)} ${sv.toLowerCase()}`).join(', ')} severity. Each fixed defect was re-tested and is protected by the regression test listed in the log.`),
     DataTable([{ header: 'ID', width: 800 }, { header: 'Title', width: 3000 }, { header: 'Module', width: 1000 }, { header: 'Severity / priority', width: 1100 }, { header: 'Found in', width: 1638 }, { header: 'Status', width: 900 }, { header: 'Verified by', width: 1200 }],
       defects.map((d) => [d.id, d.title, d.module, `${d.severity} / ${d.priority}`, d.foundIn, d.status, d.verifiedBy]), { size: 15, statusCol: 5, boldFirst: true }),
     TableCaption('Defect log'),
-    H3('12.1 Detailed defect reports'),
+    H3('5.1 Detailed defect reports'),
     ...defects.flatMap((d) => [
       DataTable([{ header: d.id, width: 2000 }, { header: d.title, width: PORTRAIT_W - 2000 }], [
         ['Module / severity', `${d.module} · ${d.severity} · ${d.priority}`],
@@ -262,12 +262,12 @@ export function testResults() {
       ], { boldFirst: true, zebra: false, size: 17 }),
       Small(' '),
     ]),
-    H3('12.2 Defect summary and analysis'),
+    H3('5.2 Defect summary and analysis'),
     DataTable([{ header: 'Severity', width: 2000 }, { header: 'Reported', width: 2000 }, { header: 'Fixed', width: 2000 }, { header: 'Deferred / open', width: PORTRAIT_W - 6000 }], ['High', 'Medium', 'Low'].map((sv) => [sv, String(sevCount(sv)), String(defects.filter((d) => d.severity === sv && d.status === 'Fixed').length), String(defects.filter((d) => d.severity === sv && d.status !== 'Fixed').length)]), { boldFirst: true }),
     TableCaption('Defects by severity and status'),
     P(`**Analysis.** Most defects (${defects.filter((d) => /Robustness|robustness/.test(d.foundIn)).length} of ${defects.length}) were found by the dedicated robustness / edge-case pass, which probed every API with impossible dates, wrong data types, extreme values and malicious strings and crawled every screen for all six roles at desktop and phone width. The two high-severity defects were both data-integrity problems that only appear in longer scenarios: DEF-05 (bed-day billing after a same-day transfer) and DEF-22 (sequence numbers colliding with existing numbers) – confirming the value of scenario-based and data-driven testing in addition to unit tests. No defect caused data loss and no security vulnerability was found; the one deferred item (DEF-08) is a usability enhancement whose rule is already enforced by the server.`),
 
-    H2('13. Conclusion'),
+    H2('6. Conclusion'),
     P(`MediFlow implements all ${spec.functional.length} functional requirements of the SRS. The final regression run passed ${tot.pass} of ${tot.total} automated test cases across unit, integration, system and acceptance levels, every exit criterion of the test plan is met, and all defects of medium or higher severity are fixed and covered by regression tests. The system is therefore considered **ready for demonstration and user acceptance by hospital staff**. Recommended next steps before a production pilot are: cross-browser and accessibility testing, load testing on the target server, nightly database backups, HTTPS deployment behind a reverse proxy and a supervised user-acceptance session.`),
   ];
 }
@@ -279,16 +279,16 @@ export function traceability() {
   const rows = [...spec.functional, ...spec.nonFunctional.map((n) => ({ ...n, module: null }))].map((r) => {
     const ts = tests.filter((t) => (t.fr || []).includes(r.id));
     const ok = ts.length && ts.every((t) => t.status === 'PASS');
-    if (!ts.length && r.id === 'NFR-06') return [r.id, r.category, '—', coverage ? `Verified by measurement: layered structure + domain-rule line coverage ${coverage.domain.lines}% (Part D, 10.2)` : 'Coverage not measured', coverage && coverage.domain.lines >= 80 ? 'PASS' : 'NOT TESTED'];
-    if (!ts.length && r.id === 'NFR-07') return [r.id, r.category, '—', 'Tested on Linux + Chromium only; other operating systems and browsers not yet verified (Part C, 2.2)', 'PASS (PARTIAL)'];
-    return [r.id, r.module ? `${r.module} – ${svc[r.module]}` : r.category, r.module ? pages[r.module] : '—', ts.map((t) => t.id).join(', ') || (r.id === 'NFR-09' || r.id === 'NFR-10' ? 'Not tested – production design target (Part C, 2.2)' : '—'), ts.length ? (ok ? 'PASS' : 'FAIL') : 'NOT TESTED'];
+    if (!ts.length && r.id === 'NFR-06') return [r.id, r.category, '—', coverage ? `Verified by measurement: layered structure + domain-rule line coverage ${coverage.domain.lines}% (Test Report, Section 3.2)` : 'Coverage not measured', coverage && coverage.domain.lines >= 80 ? 'PASS' : 'NOT TESTED'];
+    if (!ts.length && r.id === 'NFR-07') return [r.id, r.category, '—', 'Tested on Linux + Chromium only; other operating systems and browsers not yet verified (Test Plan, Section 2.2)', 'PASS (PARTIAL)'];
+    return [r.id, r.module ? `${r.module} – ${svc[r.module]}` : r.category, r.module ? pages[r.module] : '—', ts.map((t) => t.id).join(', ') || (r.id === 'NFR-09' || r.id === 'NFR-10' ? 'Not tested – production design target (Test Plan, Section 2.2)' : '—'), ts.length ? (ok ? 'PASS' : 'FAIL') : 'NOT TESTED'];
   });
   return [
     H1('APPENDIX A – REQUIREMENTS TRACEABILITY MATRIX', { pageBreak: true }),
     P('Each requirement is traced forward to the design module (service) and user-interface screen that implement it and to the test cases that verify it. The matrix is generated from the requirement identifiers embedded in the automated tests.'),
     DataTable([{ header: 'Requirement', width: 1300 }, { header: 'Design module / service', width: 3200 }, { header: 'UI screen', width: 2000 }, { header: 'Verified by test cases', width: 6870 }, { header: 'Status', width: 1200 }], rows, { size: 15, statusCol: 4, boldFirst: true }),
     TableCaption('Requirements traceability matrix'),
-    P('User requirements are traced to functional requirements in Part A, Section 7, and validated by the acceptance tests listed in Part C, Section 7.'),
+    P('User requirements are traced to functional requirements in the SRS, Section 7, and validated by the acceptance tests listed in the Software Test Plan, Section 7.'),
   ];
 }
 

@@ -1,4 +1,4 @@
-import { H1, H2, H3, P, Bullets, DataTable, TableCaption, KVTable, Callout, Figure, PORTRAIT_W } from './lib.mjs';
+import { H1, H2, H3, PartH1, P, Bullets, DataTable, TableCaption, KVTable, Callout, Figure, PORTRAIT_W } from './lib.mjs';
 import { spec, endpoints, ROOT } from './data.mjs';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -36,12 +36,12 @@ export function srs() {
   });
 
   return [
-    H1('PART A – SOFTWARE REQUIREMENTS SPECIFICATION (SRS)', { pageBreak: true }),
-    Callout('This SRS follows the structure required by the assignment and is informed by IEEE Std 830-1998 / ISO/IEC/IEEE 29148:2018. Every requirement has a unique identifier (FR-xx, NFR-xx, BR-xx, UR-xx) that is traced to design elements and test cases in Part D and Appendix A.'),
+    PartH1('A', 'SOFTWARE REQUIREMENTS SPECIFICATION (SRS)'),
+    Callout('This SRS follows the structure required by the assignment and is informed by IEEE Std 830-1998 / ISO/IEC/IEEE 29148:2018. Every requirement has a unique identifier (FR-xx, NFR-xx, BR-xx, UR-xx) that is traced to design elements and test cases in the Software Test Report and its traceability matrix (Appendix A).'),
 
     H2('1. Introduction'),
     H3('1.1 Purpose'),
-    P('This document specifies the requirements of **MediFlow**, a web-based Hospital Management System (HMS) developed for Assignment 1 of the Software Engineering course. It describes what the system must do (functional requirements), how well it must do it (non-functional requirements), who will use it and under which assumptions and constraints. It is the baseline for the Software Design Document (Part B) and the Software Test Plan and Report (Parts C and D).'),
+    P('This document specifies the requirements of **MediFlow**, a web-based Hospital Management System (HMS) developed for Assignment 1 of the Software Engineering course. It describes what the system must do (functional requirements), how well it must do it (non-functional requirements), who will use it and under which assumptions and constraints. It is the baseline for the Software Design Document, the UML diagrams, the Software Test Plan and the Software Test Report.'),
     H3('1.2 Intended audience'),
     Bullets([
       '**Course instructor and evaluators** – to assess completeness and quality of the specification.',
@@ -138,10 +138,10 @@ export function srs() {
     H2('6. Non-functional Requirements'),
     DataTable([{ header: 'ID', width: 900 }, { header: 'Category', width: 1900 }, { header: 'Requirement', width: PORTRAIT_W - 2800 }], spec.nonFunctional.map((n) => [n.id, n.category, n.text]), { boldFirst: true }),
     TableCaption('Non-functional requirements'),
-    P('NFR-01 to NFR-08 are verified by automated tests (see Part D); NFR-09 and NFR-10 are design targets for a production deployment and are addressed by the architecture (Part B) rather than measured on the prototype.'),
+    P('NFR-01 to NFR-08 are verified by automated tests (see the Software Test Report); NFR-09 and NFR-10 are design targets for a production deployment and are addressed by the architecture (see the Software Design Document) rather than measured on the prototype.'),
 
     H2('7. User Requirements'),
-    P('User requirements describe, in the language of each user class, what they need to achieve. They are written as user stories with acceptance criteria and are refined into the functional requirements listed in the last column. The acceptance tests (AT-01 … AT-05) in Part D validate them end-to-end.'),
+    P('User requirements describe, in the language of each user class, what they need to achieve. They are written as user stories with acceptance criteria and are refined into the functional requirements listed in the last column. The acceptance tests (AT-01 … AT-05) in the Software Test Report validate them end-to-end.'),
     DataTable([
       { header: 'ID', width: 760 }, { header: 'As a …', width: 1250 }, { header: 'I want to …', width: 2350 }, { header: 'So that …', width: 1700 }, { header: 'Acceptance criteria', width: 2578 }, { header: 'FRs', width: 1000 },
     ], USER_REQUIREMENTS, { boldFirst: true, size: 17 }),

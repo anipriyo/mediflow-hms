@@ -10,6 +10,9 @@ export const ROOT = path.resolve(__dirname, '../..');
 /** Public deployment of the prototype (Render free web service, see render.yaml). */
 export const LIVE_URL = 'https://mediflow-hms-6vw1.onrender.com';
 export const LIVE_HOST = LIVE_URL.replace(/^https?:\/\//, '');
+/** Public source code repository. */
+export const REPO_URL = 'https://github.com/anipriyo/mediflow-hms';
+export const REPO_HOST = REPO_URL.replace(/^https?:\/\//, '');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 const json = (p) => JSON.parse(read(p));
 const exists = (p) => fs.existsSync(path.join(ROOT, p));

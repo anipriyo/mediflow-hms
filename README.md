@@ -20,7 +20,18 @@ MediFlow is a web-based HMS that manages **patients, doctors, appointments, pres
 - Automatic charges → invoices → part payments → printable receipts
 - Role dashboards and management reports
 
-The full report (SRS, SDD with UML, Test Plan and Test Report) is in `deliverables/` (`npm run report` regenerates it into `docs/report/build/`).
+The submission documents are in [`deliverables/`](deliverables/), as DOCX and PDF:
+
+| File | Document |
+|---|---|
+| `MediFlow_HMS_Group11_1_SRS` | Software Requirements Specification |
+| `MediFlow_HMS_Group11_2_SDD` | Software Design Document |
+| `MediFlow_HMS_Group11_3_UML_Diagrams` | UML diagrams (16 diagrams plus the data model) |
+| `MediFlow_HMS_Group11_4_Test_Plan` | Software Test Plan |
+| `MediFlow_HMS_Group11_5_Test_Report` | Software Test Report |
+| `MediFlow_HMS_Group11_Report` | All of the above in one report |
+
+Each document has its own cover and Group Details page (group number, assignment number and title, members' names and registration numbers). `npm run report` regenerates all of them into `docs/report/build/`.
 
 ## How to run
 
@@ -126,7 +137,7 @@ npm run dev
 | `npm test` | Unit + integration tests (Vitest + Supertest) |
 | `npm run test:coverage` | Same, with code coverage |
 | `npx playwright install chromium` then `npm run test:e2e` | System + acceptance tests in a real browser |
-| `npm run report` | Regenerate the report (DOCX + PDF) and check its punctuation. Needs LibreOffice for the PDF and table of contents (`brew install --cask libreoffice` on macOS) |
+| `npm run report` | Regenerate the six documents (DOCX + PDF) and check their punctuation. Needs LibreOffice for the PDF and table of contents (`brew install --cask libreoffice` on macOS) |
 
 Tip: the demo data is generated relative to the moment the database is created. Run `npm run seed` on the morning of a demo so that today's queues and appointments look realistic.
 

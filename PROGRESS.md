@@ -6,6 +6,13 @@ Spec source of truth: docs/spec/requirements.json (50 FR, 10 NFR, 12 BR), docs/s
 
 Stack: React 18 + Vite 5 + Tailwind 3 · Express 4 + better-sqlite3 · JWT + bcrypt · Vitest + Supertest + Playwright
 
+## 2026-10-25 – Five separate submission documents
+- User asked for the SRS, SDD, UML, Test Plan and Test Report as separate files, each showing the group number, assignment number and title, and members' names and registration numbers.
+- `build-report.mjs` now builds six documents in one run: the combined report plus `MediFlow_HMS_Group11_1_SRS`, `_2_SDD`, `_3_UML_Diagrams`, `_4_Test_Plan` and `_5_Test_Report` (DOCX + PDF in `deliverables/`). Each has its own cover (document title, Group 11, members table, live and repo links), Group Details table, member table, revision history (v1.2), summary and table of contents.
+- New `content-uml.mjs`: a UML document with a diagram catalogue (16 UML diagrams plus the data model, what each shows, the requirements it covers, its source file), notation notes and every diagram with a short explanation. The SDD keeps its own diagrams so it still stands alone.
+- Cross-references now name documents instead of parts, and the Test Report sections are numbered 1 to 6 (they were 8 to 13). Verified per file: all required fields present, tables and figures numbered in order, no "Part A to D" wording in the separate files, complete TOCs, zero em dash, en dash, semicolon or colon.
+- LibreOffice was reinstalled for the PDF build and uninstalled again afterwards.
+
 ## 2026-10-22 – Live deployment, report v1.1, history cleanup
 - **Deployed** on a Render free web service from `render.yaml` (Blueprint `mediflow-hms`, Singapore, Node 22). Live at https://mediflow-hms-6vw1.onrender.com and verified: `/api/health` ok, home page, deep links and demo login all work. Every push to `main` redeploys. Vercel was rejected because each serverless instance would hold its own SQLite copy.
 - **Report v1.1** (`deliverables/` DOCX + PDF, 84 pages):

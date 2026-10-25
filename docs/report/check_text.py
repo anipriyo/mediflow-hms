@@ -1,9 +1,10 @@
 """Fail if the report's visible text contains an em dash, en dash, semicolon or colon.
 
-Usage: python3 docs/report/check_text.py [path/to/report.docx]
-Checks the body, headers, footers and document title of the DOCX (default: docs/report/build/...).
+Usage: python3 docs/report/check_text.py [file.docx ...]
+Checks the body, headers, footers and document title of each DOCX (default: every docs/report/build/*.docx).
 Exit code 1 lists every offending paragraph with its position, so the generator can be fixed.
 """
+import glob
 import os
 import re
 import sys
@@ -32,18 +33,23 @@ def paragraphs(docx):
 
 
 def main():
-    docx = sys.argv[1] if len(sys.argv) > 1 else DEFAULT
-    found = 0
-    for where, text in paragraphs(docx):
-        bad = sorted({name for ch, name in FORBIDDEN.items() if ch in text})
-        if bad:
-            found += 1
-            if found <= 200:
-                print(f'{where}: {", ".join(bad)} | {text[:160]}')
-    if found:
-        print(f'[check_text] {found} paragraphs contain forbidden punctuation')
+    files = sys.argv[1:] or sorted(glob.glob(os.path.join(HERE, 'build', '*.docx')))
+    if not files:
+        sys.exit('[check_text] no DOCX files to check')
+    total = 0
+    for docx in files:
+        found = 0
+        for where, text in paragraphs(docx):
+            bad = sorted({name for ch, name in FORBIDDEN.items() if ch in text})
+            if bad:
+                found += 1
+                if found <= 50:
+                    print(f'{os.path.basename(docx)} {where}: {", ".join(bad)} | {text[:160]}')
+        print(f'[check_text] {os.path.basename(docx)}: {"OK" if not found else f"{found} paragraphs with forbidden punctuation"}')
+        total += found
+    if total:
         sys.exit(1)
-    print('[check_text] OK, no em dash, en dash, semicolon or colon in the report text')
+    print('[check_text] OK, no em dash, en dash, semicolon or colon in any document')
 
 
 if __name__ == '__main__':

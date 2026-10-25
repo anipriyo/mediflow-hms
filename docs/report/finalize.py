@@ -1,8 +1,8 @@
-"""Update the table of contents and export the report to PDF with LibreOffice.
+"""Update the table of contents and export each document to PDF with LibreOffice.
 
-Usage: python3 docs/report/finalize.py
-Reads  docs/report/build/MediFlow_HMS_Group11_Report.docx
-Writes docs/report/build/MediFlow_HMS_Group11_Report.pdf  (and refreshes the DOCX so the TOC is filled in)
+Usage: python3 docs/report/finalize.py [file.docx ...]
+Reads  every docs/report/build/*.docx (or the files given)
+Writes a PDF next to each DOCX (and refreshes the DOCX so its TOC is filled in)
 
 Runs a small LibreOffice Basic macro inside a throw-away LibreOffice profile, so it needs only `soffice`
 (no Python uno module). Install LibreOffice with "brew install --cask libreoffice" on macOS or the
@@ -17,8 +17,7 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 HERE = Path(__file__).resolve().parent
-SRC = HERE / 'build' / 'MediFlow_HMS_Group11_Report.docx'
-PDF = SRC.with_suffix('.pdf')
+BUILD = HERE / 'build'
 MAC_SOFFICE = '/Applications/LibreOffice.app/Contents/MacOS/soffice'
 
 # Update every index (table of contents) twice so page numbers settle after the TOC grows,
@@ -78,8 +77,9 @@ def find_soffice():
 
 
 def main():
-    if not SRC.exists():
-        sys.exit(f'{SRC} not found. Run "node docs/report/build-report.mjs" first.')
+    sources = [Path(a).resolve() for a in sys.argv[1:]] or sorted(BUILD.glob('*.docx'))
+    if not sources:
+        sys.exit(f'No DOCX files in {BUILD}. Run "node docs/report/build-report.mjs" first.')
     soffice = find_soffice()
     profile = Path(tempfile.mkdtemp(prefix='report-lo-'))
     base = [soffice, '--headless', '--invisible', '--nologo', '--norestore', f'-env:UserInstallation={profile.as_uri()}']
@@ -93,13 +93,14 @@ def main():
         # Render Consolas (code font, not on macOS) with LibreOffice's bundled DejaVu Sans Mono
         registry = profile / 'user' / 'registrymodifications.xcu'
         registry.write_text(registry.read_text(encoding='utf-8').replace('</oor:items>', FONT_SUBSTITUTION + '</oor:items>'), encoding='utf-8')
-        before = PDF.stat().st_mtime if PDF.exists() else 0
-        env = {**os.environ, 'REPORT_DOCX': str(SRC), 'REPORT_PDF': str(PDF)}
-        subprocess.run([*base, 'macro:///Standard.Module1.Finalize'], check=True, timeout=600, env=env, capture_output=True)
-        if not PDF.exists() or PDF.stat().st_mtime <= before:
-            sys.exit('LibreOffice finished but did not write the PDF')
-        print(f'[finalize] wrote {PDF}')
-        print(f'[finalize] updated {SRC}')
+        for src in sources:
+            pdf = src.with_suffix('.pdf')
+            before = pdf.stat().st_mtime if pdf.exists() else 0
+            env = {**os.environ, 'REPORT_DOCX': str(src), 'REPORT_PDF': str(pdf)}
+            subprocess.run([*base, 'macro:///Standard.Module1.Finalize'], check=True, timeout=600, env=env, capture_output=True)
+            if not pdf.exists() or pdf.stat().st_mtime <= before:
+                sys.exit(f'LibreOffice finished but did not write {pdf.name}')
+            print(f'[finalize] {pdf.name} written, TOC updated in {src.name}')
     finally:
         shutil.rmtree(profile, ignore_errors=True)
 

@@ -5,7 +5,7 @@ Software Engineering **Assignment 1 (Hospital Management System), Group 11**. A 
 Read `PROGRESS.md` (newest entry first) before doing anything. `README.md` has the user-facing run instructions and demo accounts; `DEMO.md` is the 10-minute demo script.
 
 ## Status
-Feature-complete and ready to submit. Final report is in `deliverables/`. Live demo at https://mediflow-hms-6vw1.onrender.com (Render). Remaining work is only fixes the group asks for.
+Feature-complete and ready to submit. The five submission documents (SRS, SDD, UML diagrams, Test Plan, Test Report) and the combined report are in `deliverables/`. Live demo at https://mediflow-hms-6vw1.onrender.com (Render). Remaining work is only fixes the group asks for.
 
 ## Folder map
 | Path | What |
@@ -16,9 +16,9 @@ Feature-complete and ready to submit. Final report is in `deliverables/`. Live d
 | `docs/spec/` | Source of truth: `requirements.json` (50 FR, 10 NFR, 12 BR), `defects.json` (DEF-01..33), `team.json` |
 | `docs/uml/` | PlantUML sources; rendered PNGs in `png/` |
 | `docs/test-results/` | Raw results, coverage, `run-log.md` (feeds the report) |
-| `docs/report/` | Report generator (`build-report.mjs` + `finalize.py` + `check_text.py`) → `docs/report/build/` (git-ignored) |
+| `docs/report/` | Document generator. `build-report.mjs` builds six DOCX files (combined report + 5 separate documents) from `content-srs/sdd/uml/test.mjs`, `finalize.py` fills the TOCs and writes PDFs, `check_text.py` checks punctuation. Output in `docs/report/build/` (git-ignored) |
 | `docs/screenshots/` | App screenshots used in the report |
-| `deliverables/` | Final report DOCX + PDF (tracked); source zip (ignored, made with `git archive --format=zip --prefix=mediflow-hms/ -o deliverables/MediFlow_HMS_Group11_Source.zip HEAD`) |
+| `deliverables/` | `MediFlow_HMS_Group11_1_SRS`, `_2_SDD`, `_3_UML_Diagrams`, `_4_Test_Plan`, `_5_Test_Report` and the combined `_Report`, each as DOCX + PDF (tracked); source zip (ignored, made with `git archive --format=zip --prefix=mediflow-hms/ -o deliverables/MediFlow_HMS_Group11_Source.zip HEAD`) |
 | `data/` | SQLite DB at runtime (ignored, recreated by `npm run seed`) |
 
 ## Environment and commands
@@ -40,6 +40,7 @@ Feature-complete and ready to submit. Final report is in `deliverables/`. Live d
 - Vercel was rejected because serverless instances each get their own `/tmp` SQLite copy, so data would be inconsistent between requests.
 
 ## Project rules
+- **Separate documents:** content functions use `PartH1()` and document names ("the Software Test Report", "SRS, Section 7"), never "Part A/B/C/D", so the same text works in the combined report and the standalone files. Each document's cover and Group Details page must show the group number, assignment number and title, and every member's name and registration number.
 - **Report house style:** the report text must contain no em dash, en dash, semicolon or colon. `clean()` in `docs/report/lib.mjs` converts generated text (times 09.30, ranges "A to B", "Label. Text", lists in brackets) and `check_text.py` fails `npm run report` if any remain. Write new report prose without them.
 - **No tool attribution anywhere in the repo:** commit messages have no co-author or session trailers, and files never name the coding assistant used. Any assistant-specific instruction file stays local only (list it in `.git/info/exclude`, never in `.gitignore`).
 - Requirement, defect and test IDs must stay consistent across `docs/spec/*.json`, tests and the report; a defect's test ID must exist in the tests.

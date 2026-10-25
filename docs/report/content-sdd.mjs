@@ -1,4 +1,4 @@
-import { H1, H2, H3, P, Bullets, DataTable, TableCaption, Callout, Figure, Landscape, PORTRAIT_W } from './lib.mjs';
+import { H1, H2, H3, PartH1, P, Bullets, DataTable, TableCaption, Callout, Figure, Landscape, PORTRAIT_W } from './lib.mjs';
 import { spec, rbac, ROOT, loc, LIVE_URL, LIVE_HOST } from './data.mjs';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -87,7 +87,7 @@ function rbacMatrix() {
 
 export function sdd() {
   return [
-    H1('PART B – SOFTWARE DESIGN DOCUMENT (SDD)', { pageBreak: true }),
+    PartH1('B', 'SOFTWARE DESIGN DOCUMENT (SDD)'),
     Callout('The design follows the IEEE Std 1016-2009 viewpoints, namely context and composition (architecture, modules), logical (class diagrams), interaction (sequence diagrams), state dynamics (state diagrams), information (data model) and interface (UI and API). All diagrams are UML 2.5 and were produced with PlantUML from the source files in docs/uml/.'),
 
     H2('1. System Architecture'),
@@ -145,7 +145,7 @@ export function sdd() {
     Landscape(...Figure(uml('03-class-design.png'), 'Design class diagram – service layer and dependencies', { maxW: 960, maxH: 590 })),
 
     H2('5. Use Case Diagram'),
-    P('Because a single diagram with six actors and forty use cases is unreadable, the use-case model is split into four diagrams. These are an overview (Part A, Section 4.3), outpatient care, inpatient care & billing, and administration & access control. «include» marks behaviour that always happens as part of the base use case, while «extend» marks optional behaviour.'),
+    P('Because a single diagram with six actors and forty use cases is unreadable, the use-case model is split into four diagrams. These are an overview (SRS, Section 4.3), outpatient care, inpatient care & billing, and administration & access control. «include» marks behaviour that always happens as part of the base use case, while «extend» marks optional behaviour.'),
     ...Figure(uml('01b-use-case-outpatient.png'), 'Use case diagram – outpatient care', { maxH: 850 }),
     ...Figure(uml('01c-use-case-inpatient-billing.png'), 'Use case diagram – inpatient care and billing', { maxH: 560 }),
     ...Figure(uml('01d-use-case-admin.png'), 'Use case diagram – administration and access control', { maxH: 520 }),
@@ -192,6 +192,6 @@ export function sdd() {
     ...shot('reports', 'Management reports for a date range', { maxH: 380 }),
     ...shot('audit', 'Append-only audit trail', { maxH: 380 }),
     ...shot('mobile-dashboard', 'Responsive layout at 390 px (phone)', { maxH: 420, maxW: 260 }),
-    P(`The module list in this part covers all ${spec.functional.length} functional requirements; Appendix A traces each one to its module, screen and test cases.`),
+    P(`The module list in this part covers all ${spec.functional.length} functional requirements; the traceability matrix in the Software Test Report (Appendix A) traces each one to its module, screen and test cases.`),
   ];
 }

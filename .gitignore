@@ -9,6 +9,6 @@ data/e2e.db*
 docs/report/build/
 node_modules/
 playwright-report/
-test-results/
+/test-results/
 deliverables/*.zip
 chat_history/

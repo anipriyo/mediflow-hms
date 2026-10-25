@@ -149,6 +149,13 @@ export function runs(text, base = {}) {
   return out;
 }
 
+let standalone = false;
+/** Standalone mode: each part is its own document, so part headings drop the "PART X" prefix. */
+export const setStandalone = (value) => { standalone = Boolean(value); };
+export const isStandalone = () => standalone;
+/** Part heading, "PART A – TITLE" in the combined report or just "TITLE" in a standalone document. */
+export const PartH1 = (letter, title) => H1(standalone ? title : `PART ${letter} – ${title}`, { pageBreak: true });
+
 export const H1 = (t, opts = {}) => new Paragraph({ heading: HeadingLevel.HEADING_1, pageBreakBefore: opts.pageBreak ?? false, children: [new TextRun({ text: clean(t), font: FONT })] });
 export const H2 = (t) => new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: clean(t), font: FONT })] });
 export const H3 = (t) => new Paragraph({ heading: HeadingLevel.HEADING_3, children: [new TextRun({ text: clean(t), font: FONT })] });
