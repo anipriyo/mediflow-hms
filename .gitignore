@@ -2,7 +2,7 @@
 .DS_Store
 .sync/
 client/dist/
-coverage/
+/coverage/
 data/*.db
 data/*.db-*
 data/e2e.db*
