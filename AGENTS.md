@@ -5,7 +5,7 @@ Software Engineering **Assignment 1 (Hospital Management System), Group 11**. A 
 Read `PROGRESS.md` (newest entry first) before doing anything. `README.md` has the user-facing run instructions and demo accounts; `DEMO.md` is the 10-minute demo script.
 
 ## Status
-Feature-complete and ready to submit. The five submission documents (SRS, SDD, UML diagrams, Test Plan, Test Report) and the combined report are in `deliverables/`. Live demo at https://mediflow-hms-6vw1.onrender.com (Render). Remaining work is only fixes the group asks for.
+Finished, submitted and graded 10/10 (Nov 2026). This repository is the only copy; the local folder was removed. The five submission documents (SRS, SDD, UML diagrams, Test Plan, Test Report) and the combined report are in `deliverables/`. Live demo at https://mediflow-hms-6vw1.onrender.com (Render). Remaining work is only fixes the group asks for.
 
 ## Folder map
 | Path | What |

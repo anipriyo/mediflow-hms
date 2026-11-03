@@ -6,6 +6,11 @@ Spec source of truth: docs/spec/requirements.json (50 FR, 10 NFR, 12 BR), docs/s
 
 Stack: React 18 + Vite 5 + Tailwind 3 · Express 4 + better-sqlite3 · JWT + bcrypt · Vitest + Supertest + Playwright
 
+## 2026-11-03 – Project finished
+- Submitted and graded 10/10. The project is complete.
+- The local copy was removed from the Mac at the user's request. This GitHub repository is now the only copy, together with the live deployment at https://mediflow-hms-6vw1.onrender.com (Render redeploys on every push to `main`).
+- To work on it again, clone the repository, run `npm install`, `npm run seed` and `npm run dev`. Rebuilding the documents needs LibreOffice (see AGENTS.md).
+
 ## 2026-10-25 – Five separate submission documents
 - User asked for the SRS, SDD, UML, Test Plan and Test Report as separate files, each showing the group number, assignment number and title, and members' names and registration numbers.
 - `build-report.mjs` now builds six documents in one run: the combined report plus `MediFlow_HMS_Group11_1_SRS`, `_2_SDD`, `_3_UML_Diagrams`, `_4_Test_Plan` and `_5_Test_Report` (DOCX + PDF in `deliverables/`). Each has its own cover (document title, Group 11, members table, live and repo links), Group Details table, member table, revision history (v1.2), summary and table of contents.
